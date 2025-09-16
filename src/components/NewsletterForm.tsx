@@ -19,7 +19,7 @@ export default function NewsletterForm() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       setMessage('Merci pour votre inscription à notre newsletter !');
       setEmail('');
-    } catch (error) {
+    } catch (_error) {
       setMessage('Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
@@ -47,7 +47,7 @@ export default function NewsletterForm() {
               : 'bg-blue-600 hover:bg-blue-700'
           } text-white font-semibold rounded-r-lg transition-all duration-300`}
         >
-          {isSubmitting ? 'Envoi en cours...' : "S'abonner"}
+          {isSubmitting ? 'Envoi en cours...' : "S&apos;abonner"}
         </button>
       </form>
       {message && (

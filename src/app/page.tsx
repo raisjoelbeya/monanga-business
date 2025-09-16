@@ -81,7 +81,7 @@ const Footer = () => (
         <div>
           <h3 className="text-blue-300 text-xl font-bold mb-4">Service Client</h3>
           <ul className="space-y-3">
-            <li><Link href="/help" className="hover:text-white transition duration-300">Centre d'aide</Link></li>
+            <li><Link href="/help" className="hover:text-white transition duration-300">Centre d&apos;aide</Link></li>
             <li><Link href="/returns" className="hover:text-white transition duration-300">Retours</Link></li>
             <li><Link href="/shipping" className="hover:text-white transition duration-300">Livraison</Link></li>
             <li><Link href="/payments" className="hover:text-white transition duration-300">Paiements</Link></li>
@@ -152,7 +152,7 @@ export default function Home() {
                             href="/auth"
                             className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-800 text-lg sm:text-xl font-semibold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >
-                            S'inscrire / Se connecter
+                            S&apos;inscrire / Se connecter
                         </Link>
                     </div>
                 </div>
@@ -205,21 +205,21 @@ export default function Home() {
                             name="Jean Mbokani" 
                             location="Client à Kinshasa"
                         >
-                            "Je suis très satisfait des produits que j'ai reçus. La qualité est exceptionnelle et les délais de livraison sont respectés. Un service irréprochable !"
+                            Je suis très satisfait des produits que j&apos;ai reçus. La qualité est exceptionnelle et les délais de livraison sont respectés. Un service irréprochable !
                         </TestimonialCard>
                         
                         <TestimonialCard 
                             name="Marie Kabasele" 
                             location="Client à Limete"
                         >
-                            "Livraison ultra-rapide et produits de qualité supérieure. Je recommande vivement Monanga Business pour son sérieux et son professionnalisme."
+                            Livraison ultra-rapide et produits de qualité supérieure. Je recommande vivement Monanga Business pour son sérieux et son professionnalisme.
                         </TestimonialCard>
                         
                         <TestimonialCard 
                             name="Pascal Tshisekedi" 
                             location="Client à Gombe"
                         >
-                            "Service client réactif et à l'écoute. Les produits correspondent parfaitement à la description. Je ne vais plus ailleurs pour mes achats en ligne !"
+                            Service client réactif et à l&apos;écoute. Les produits correspondent parfaitement à la description. Je ne vais plus ailleurs pour mes achats en ligne !
                         </TestimonialCard>
                     </div>
                 </div>
@@ -272,7 +272,7 @@ export default function Home() {
                         />
                     </div>
                     <p className="text-gray-400 text-sm mt-6">
-                        Suivez notre actualité et restez à l'affût des dernières promotions
+                        Suivez notre actualité et restez à l&apos;affût des dernières promotions
                     </p>
                 </div>
             </section>
@@ -282,8 +282,8 @@ export default function Home() {
                 <div className="max-w-6xl mx-auto px-6 text-center">
                     <h2 className="text-4xl font-bold mb-6">Recevez nos meilleurs deals</h2>
                     <p className="text-gray-300 max-w-3xl mx-auto mb-8">
-                        Inscrivez-vous à notre newsletter pour profiter d'offres exclusives, de promotions
-                        flash et de réductions personnalisées selon vos centres d'intérêt.
+                        Inscrivez-vous à notre newsletter pour profiter d&apos;offres exclusives, de promotions
+                        flash et de réductions personnalisées selon vos centres d&apos;intérêt.
                     </p>
                     <NewsletterForm />
                 </div>

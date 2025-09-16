@@ -1,9 +1,9 @@
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-export async function apiRequest<T = any>(
+export async function apiRequest<T = unknown>(
   endpoint: string,
   method: RequestMethod = 'GET',
-  data?: any
+  data?: Record<string, unknown>
 ): Promise<{ data?: T; error?: string }> {
   const url = `/api${endpoint}`;
   

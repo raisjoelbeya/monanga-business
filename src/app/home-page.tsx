@@ -47,7 +47,7 @@ export default function HomePage() {
                             href="/auth/register"
                             className="px-8 py-4 bg-white text-gray-800 text-xl font-semibold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >
-                            S'inscrire gratuitement
+                            S&apos;inscrire gratuitement
                         </Link>
                     </div>
                 </div>

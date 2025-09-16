@@ -82,7 +82,7 @@ export default function AuthForm() {
         <div className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1">
-              Nom d'utilisateur
+              Nom d&apos;utilisateur
             </label>
             <input
               id="username"
