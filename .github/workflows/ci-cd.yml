@@ -100,4 +100,11 @@ jobs:
       - name: Run Production Migrations on Neon
         if: success()
         run: |
+          # Afficher la version de psql pour le débogage
+          psql --version
+          
+          # Afficher les informations de connexion (sans afficher le mot de passe complet)
+          echo "Connexion à la base de données avec l'URL fournie..."
+          
+          # Exécuter la migration
           psql "${{ secrets.DATABASE_URL }}" -f migrations/001_initial_schema.sql
