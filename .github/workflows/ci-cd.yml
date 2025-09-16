@@ -54,10 +54,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      - name: Run Migrations
+      - name: Run Migrations (Test DB)
         run: |
           wait-on tcp:localhost:5432
-          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -f migrations/001_initial_schema.sql
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} \
+          psql -h localhost -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -f migrations/001_initial_schema.sql
 
       - name: Run Tests
         env:
@@ -87,8 +88,6 @@ jobs:
 
       - name: Install Vercel CLI
         run: pnpm add --global vercel@latest
-        env:
-          VERBOSE: true
 
       - name: Deploy to Vercel (production)
         run: vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
@@ -100,29 +99,5 @@ jobs:
 
       - name: Run Production Migrations on Neon
         if: success()
-        env:
-          PGHOST: ${{ secrets.PROD_DB_HOST }}
-          PGPORT: ${{ secrets.PROD_DB_PORT }}
-          PGDATABASE: ${{ secrets.PROD_DB_NAME }}
-          PGUSER: ${{ secrets.PROD_DB_USER }}
-          PGPASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
-          PGSSLMODE: require
         run: |
-          # Afficher les informations de débogage (sans afficher le mot de passe)
-          echo "Tentative de connexion à la base de données..."
-          echo "Hôte: $PGHOST"
-          echo "Port: $PGPORT"
-          echo "Base de données: $PGDATABASE"
-          echo "Utilisateur: $PGUSER"
-          
-          # Tester la connexion réseau
-          echo "\nTest de connexion réseau..."
-          nc -zv $PGHOST $PGPORT || echo "Échec de la connexion réseau"
-          
-          # Essayer de se connecter avec psql
-          echo "\nTentative de connexion avec psql..."
-          PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -d $PGDATABASE -U $PGUSER -c "SELECT version();" || echo "Échec de la connexion psql"
-          
-          # Exécuter la migration
-          echo "\nExécution de la migration..."
-          PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -d $PGDATABASE -U $PGUSER -f migrations/001_initial_schema.sql
+          psql "${{ secrets.DATABASE_URL }}" -f migrations/001_initial_schema.sql
