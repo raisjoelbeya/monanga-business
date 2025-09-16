@@ -8,7 +8,6 @@ on:
 
 env:
   NODE_VERSION: '20'
-  POSTGRES_VERSION: '15-alpine'
   POSTGRES_USER: test_user
   POSTGRES_PASSWORD: test_password
   POSTGRES_DB: test_db
@@ -37,28 +36,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js and Dependencies
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install Dependencies
         run: |
-          npm ci
-          npm install -g wait-on
+          pnpm install --frozen-lockfile
+          pnpm add -g wait-on
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
       - name: Run Migrations
         run: |
-          npx wait-on tcp:localhost:5432
+          wait-on tcp:localhost:5432
           PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -f migrations/001_initial_schema.sql
 
       - name: Run Tests
         env:
-          DATABASE_URL: postgresql://${{ env.POSTG_RES_USER }}:${{ env.POSTGRES_PASSWORD }}@localhost:5432/${{ env.POSTGRES_DB }}
-        run: npm test
+          DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@localhost:5432/${{ env.POSTGRES_DB }}
+        run: pnpm test
 
   deploy:
     name: Deploy to Vercel
@@ -70,13 +74,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: pnpm add --global vercel@latest
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
