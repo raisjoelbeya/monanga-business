@@ -108,6 +108,21 @@ jobs:
           PGPASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
           PGSSLMODE: require
         run: |
-          # Forcer l'utilisation de TCP/IP
-          export PGHOSTADDR=""
-          psql -h $PGHOST -p $PGPORT -d $PGDATABASE -U $PGUSER -f migrations/001_initial_schema.sql
+          # Afficher les informations de débogage (sans afficher le mot de passe)
+          echo "Tentative de connexion à la base de données..."
+          echo "Hôte: $PGHOST"
+          echo "Port: $PGPORT"
+          echo "Base de données: $PGDATABASE"
+          echo "Utilisateur: $PGUSER"
+          
+          # Tester la connexion réseau
+          echo "\nTest de connexion réseau..."
+          nc -zv $PGHOST $PGPORT || echo "Échec de la connexion réseau"
+          
+          # Essayer de se connecter avec psql
+          echo "\nTentative de connexion avec psql..."
+          PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -d $PGDATABASE -U $PGUSER -c "SELECT version();" || echo "Échec de la connexion psql"
+          
+          # Exécuter la migration
+          echo "\nExécution de la migration..."
+          PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -d $PGDATABASE -U $PGUSER -f migrations/001_initial_schema.sql
