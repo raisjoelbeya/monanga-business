@@ -16,7 +16,7 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15-alpine
@@ -69,7 +69,7 @@ jobs:
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -88,10 +88,22 @@ jobs:
       - name: Install Vercel CLI
         run: pnpm add --global vercel@latest
 
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel (production)
+        run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
 
-      - name: Build and Deploy to Vercel
+      - name: Install PostgreSQL client
         run: |
-          vercel build --token ${{ secrets.VERCEL_TOKEN }}
-          vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run Production Migrations on Neon
+        if: success()
+        env:
+          PGHOST: ${{ secrets.PROD_DB_HOST }}
+          PGPORT: ${{ secrets.PROD_DB_PORT }}
+          PGDATABASE: ${{ secrets.PROD_DB_NAME }}
+          PGUSER: ${{ secrets.PROD_DB_USER }}
+          PGPASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+        run: |
+          psql "host=$PGHOST port=$PGPORT dbname=$PGDATABASE user=$PGUSER password=$PGPASSWORD sslmode=require" -f migrations/001_initial_schema.sql
+
