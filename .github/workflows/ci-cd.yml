@@ -101,6 +101,13 @@ jobs:
       - name: Run Production Migrations on Neon
         if: success()
         env:
-          DATABASE_URL: postgresql://${{ secrets.PROD_DB_USER }}:${{ secrets.PROD_DB_PASSWORD }}@${{ secrets.PROD_DB_HOST }}:${{ secrets.PROD_DB_PORT }}/${{ secrets.PROD_DB_NAME }}?sslmode=require
+          PGHOST: ${{ secrets.PROD_DB_HOST }}
+          PGPORT: ${{ secrets.PROD_DB_PORT }}
+          PGDATABASE: ${{ secrets.PROD_DB_NAME }}
+          PGUSER: ${{ secrets.PROD_DB_USER }}
+          PGPASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+          PGSSLMODE: require
         run: |
-          psql "$DATABASE_URL" -f migrations/001_initial_schema.sql
+          # Forcer l'utilisation de TCP/IP
+          export PGHOSTADDR=""
+          psql -h $PGHOST -p $PGPORT -d $PGDATABASE -U $PGUSER -f migrations/001_initial_schema.sql
