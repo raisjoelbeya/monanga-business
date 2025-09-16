@@ -107,4 +107,4 @@ jobs:
           PGUSER: ${{ secrets.PROD_DB_USER }}
           PGPASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
         run: |
-          psql "host=$PGHOST port=$PGPORT dbname=$PGDATABASE user=$PGUSER password=$PGPASSWORD sslmode=require" -f migrations/001_initial_schema.sql
+          PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -d $PGDATABASE -U $PGUSER -f migrations/001_initial_schema.sql
