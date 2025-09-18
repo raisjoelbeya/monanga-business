@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { auth } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { getClientSession } from '@/lib/auth-helpers';
+import { toTitleCase } from '@/lib/utils/string';
+import Image from 'next/image';
 
 type User = {
   id: string;
-  username: string;
+  email: string | null;
+  name?: string | null;
+  image?: string | null;
 } | null;
 
 export default function Dashboard() {
@@ -17,15 +21,17 @@ export default function Dashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data } = await auth.getSession();
-        if (!data?.user) {
-          router.push('/');
+        const { user: currentUser } = await getClientSession();
+        
+        if (!currentUser) {
+          router.push('/login');
           return;
         }
-        setUser(data.user);
+
+        setUser(currentUser);
       } catch (error) {
         console.error('Erreur de vérification de session:', error);
-        router.push('/');
+        router.push('/login');
       } finally {
         setLoading(false);
       }
@@ -36,8 +42,19 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     try {
-      await auth.logout();
-      router.push('/');
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Échec de la déconnexion');
+      }
+      
+      router.push('/login');
+      router.refresh(); // Rafraîchir la page pour mettre à jour l'état d'authentification
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
@@ -45,7 +62,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement...</p>
@@ -54,48 +71,145 @@ export default function Dashboard() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-red-500">Vous devez être connecté pour accéder à cette page.</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Mon Tableau de Bord</h1>
-            </div>
-            <div className="flex items-center">
-              <span className="text-gray-700 mr-4">
-                Connecté en tant que <span className="font-semibold">{user?.username}</span>
-              </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Déconnexion
-              </button>
-            </div>
+    <div className="min-h-screen bg-black text-white">
+      {/* En-tête */}
+      <header className="bg-gray-900 shadow-lg">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-300">{user.name ? toTitleCase(user.name) : user.email}</span>
+            {user.image && (
+              <Image 
+                src={user.image} 
+                alt="Photo de profil" 
+                className="h-10 w-10 rounded-full border-2 border-blue-500"
+                width={40}
+                height={40}
+              />
+            )}
+            <button
+              onClick={handleLogout}
+              className="ml-4 px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+            >
+              Déconnexion
+            </button>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Bienvenue, {user?.username} !</h2>
-            <p className="text-gray-600">
-              Vous êtes maintenant connecté à votre compte. Ceci est une page protégée.
-            </p>
-            <div className="mt-6 p-4 bg-blue-50 rounded-md">
-              <h3 className="text-lg font-medium text-blue-800">Informations du compte</h3>
-              <dl className="mt-2">
-                <div className="py-2">
-                  <dt className="text-sm font-medium text-gray-500">ID Utilisateur</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{user?.id}</dd>
+      {/* Contenu principal */}
+      <main className="bg-black">
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            <div className="bg-gray-900 rounded-lg shadow-xl overflow-hidden">
+              <div className="px-6 py-8">
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  Bienvenue, {user.name ? toTitleCase(user.name) : 'Utilisateur'} !
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {/* Carte Statistiques */}
+                  <div className="bg-gray-800 p-6 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="bg-blue-600 p-3 rounded-lg">
+                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-400">Commandes</p>
+                        <p className="text-2xl font-semibold text-white">0</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Carte Dépenses */}
+                  <div className="bg-gray-800 p-6 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="bg-green-600 p-3 rounded-lg">
+                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-400">Dépenses totales</p>
+                        <p className="text-2xl font-semibold text-white">0 €</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Carte Dernière connexion */}
+                  <div className="bg-gray-800 p-6 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="bg-yellow-500 p-3 rounded-lg">
+                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-400">Dernière connexion</p>
+                        <p className="text-2xl font-semibold text-white">
+                          {new Date().toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="py-2">
-                  <dt className="text-sm font-medium text-gray-500">Nom d&apos;utilisateur</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{user?.username}</dd>
+
+                {/* Section Activités récentes */}
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-white mb-4">Activités récentes</h3>
+                  <div className="bg-gray-800 rounded-lg overflow-hidden">
+                    <ul className="divide-y divide-gray-700">
+                      <li className="p-4 hover:bg-gray-700 transition-colors">
+                        <div className="flex items-center">
+                          <div className="bg-blue-600 p-2 rounded-full">
+                            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                          </div>
+                          <div className="ml-4">
+                            <p className="text-sm font-medium text-white">Nouvelle commande</p>
+                            <p className="text-sm text-gray-400">Votre commande #12345 a été passée avec succès</p>
+                            <p className="text-xs text-gray-500 mt-1">Il y a 2 jours</p>
+                          </div>
+                        </div>
+                      </li>
+                      <li className="p-4 hover:bg-gray-700 transition-colors">
+                        <div className="flex items-center">
+                          <div className="bg-green-600 p-2 rounded-full">
+                            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div className="ml-4">
+                            <p className="text-sm font-medium text-white">Confirmation d'email</p>
+                            <p className="text-sm text-gray-400">Votre adresse email a été vérifiée avec succès</p>
+                            <p className="text-xs text-gray-500 mt-1">Il y a 1 semaine</p>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-              </dl>
+              </div>
             </div>
           </div>
         </div>

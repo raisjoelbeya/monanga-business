@@ -1,5 +1,6 @@
 import { lucia } from "@/lib/lucia";
 import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
@@ -12,9 +13,9 @@ export async function GET() {
       );
     }
 
-    const { user } = await lucia.validateSession(sessionId);
+    const { user: sessionUser } = await lucia.validateSession(sessionId);
     
-    if (!user) {
+    if (!sessionUser) {
       // Invalid session
       const sessionCookie = lucia.createBlankSessionCookie();
       (await cookies()).set(
@@ -29,11 +30,33 @@ export async function GET() {
       );
     }
 
+    // Récupérer les informations complètes de l'utilisateur depuis la base de données
+    const user = await prisma.user.findUnique({
+      where: { id: sessionUser.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        role: true
+      }
+    });
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({ user: null }),
+        { status: 200 }
+      );
+    }
+
     return new Response(
       JSON.stringify({ 
         user: {
           id: user.id,
-          username: user.username
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role
         }
       }),
       { status: 200 }

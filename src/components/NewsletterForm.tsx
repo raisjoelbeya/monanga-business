@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState('');
@@ -10,16 +10,16 @@ export default function NewsletterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
     setIsSubmitting(true);
     setMessage('');
-    
+
     try {
       // Simuler un appel API
       await new Promise(resolve => setTimeout(resolve, 1000));
       setMessage('Merci pour votre inscription à notre newsletter !');
       setEmail('');
-    } catch (_error) {
+    } catch {
       setMessage('Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
@@ -34,7 +34,7 @@ export default function NewsletterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Votre adresse email"
-          className="py-4 px-6 rounded-l-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-grow"
+          className="py-4 px-6 rounded-l-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-50 flex-grow"
           required
           disabled={isSubmitting}
         />
@@ -47,7 +47,7 @@ export default function NewsletterForm() {
               : 'bg-blue-600 hover:bg-blue-700'
           } text-white font-semibold rounded-r-lg transition-all duration-300`}
         >
-          {isSubmitting ? 'Envoi en cours...' : "S&apos;abonner"}
+          {isSubmitting ? 'Envoi en cours...' : "S'abonner"}
         </button>
       </form>
       {message && (
