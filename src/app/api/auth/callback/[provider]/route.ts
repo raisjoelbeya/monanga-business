@@ -192,18 +192,12 @@ const handleOAuthError = (error: unknown, provider: Provider) => {
     );
 };
 
-interface RouteParams {
-  params: {
-    provider: string;
-  };
-}
-
 // Main handler
 export async function GET(
     request: NextRequest,
-    context: RouteParams
+    { params }: { params: { provider: string } }
 ) {
-    const provider = context.params.provider as Provider;
+    const provider = params.provider as Provider;
 
     try {
         // Validate provider
