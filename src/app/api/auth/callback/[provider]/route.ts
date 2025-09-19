@@ -196,9 +196,9 @@ const handleOAuthError = (error: unknown, provider: Provider) => {
 // Main handler
 export async function GET(
     request: Request,
-    { params }: { params: { provider: string } }
+    { params }: { params: { provider: Provider } }
 ) {
-    const { provider } = params as { provider: Provider };
+    const { provider } = params;
 
     try {
         // Validate provider

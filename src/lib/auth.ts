@@ -32,11 +32,17 @@ export const google = new Google(
     `${process.env.NEXTAUTH_URL}/login/google/callback` // mieux que api/auth
 );
 
+// Alias for backward compatibility
+export const googleAuth = google;
+
 export const facebook = new Facebook(
     process.env.FACEBOOK_CLIENT_ID!,
     process.env.FACEBOOK_CLIENT_SECRET!,
     `${process.env.NEXTAUTH_URL}/login/facebook/callback`
 );
+
+// Alias for backward compatibility
+export const facebookAuth = facebook;
 
 // Typage Lucia
 declare module "lucia" {
