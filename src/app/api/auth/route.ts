@@ -47,6 +47,9 @@ export async function GET(request: NextRequest) {
       state,
       ...(provider.authorization.params || {}),
     });
+    
+    console.log('Provider ID:', provider.id);
+    console.log('Redirect URI:', `${process.env.NEXTAUTH_URL}/api/auth/callback/${provider.id}`);
 
     // Ajouter le code_challenge si on utilise PKCE
     if (provider.version === '2.0' && codeVerifier) {

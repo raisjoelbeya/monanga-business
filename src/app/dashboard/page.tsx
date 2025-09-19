@@ -200,13 +200,65 @@ export default function Dashboard() {
                             </svg>
                           </div>
                           <div className="ml-4">
-                            <p className="text-sm font-medium text-white">Confirmation d'email</p>
+                            <p className="text-sm font-medium text-white">Confirmation d&apos;email</p>
                             <p className="text-sm text-gray-400">Votre adresse email a été vérifiée avec succès</p>
                             <p className="text-xs text-gray-500 mt-1">Il y a 1 semaine</p>
                           </div>
                         </div>
                       </li>
                     </ul>
+                  </div>
+                </div>
+
+                {/* Section Paramètres */}
+                <div className="mt-12">
+                  <h3 className="text-xl font-semibold text-white mb-6">Paramètres du compte</h3>
+                  <div className="bg-gray-800 rounded-lg p-6">
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-700 pb-6">
+                        <h4 className="text-lg font-medium text-white mb-4">Informations personnelles</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm font-medium text-gray-400">Nom</p>
+                            <p className="text-white">{user.name || 'Non défini'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-400">Email</p>
+                            <p className="text-white">{user.email}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-b border-gray-700 pb-6">
+                        <h4 className="text-lg font-medium text-white mb-4">Sécurité</h4>
+                        <div className="space-y-4">
+                          <button
+                            onClick={handleLogout}
+                            className="w-full md:w-auto px-4 py-2 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                          >
+                            Changer le mot de passe
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <h4 className="text-lg font-medium text-red-500 mb-4">Zone dangereuse</h4>
+                        <div className="rounded-md bg-red-900/30 border border-red-900/50 p-4">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div className="mb-4 md:mb-0">
+                              <h5 className="font-medium text-red-400">Supprimer mon compte</h5>
+                              <p className="text-sm text-red-300">Une fois votre compte supprimé, toutes vos données seront définitivement effacées.</p>
+                            </div>
+                            <button
+                              onClick={() => router.push('/account/delete')}
+                              className="px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                            >
+                              Supprimer mon compte
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

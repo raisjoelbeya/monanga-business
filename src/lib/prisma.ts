@@ -1,10 +1,8 @@
-import { PrismaClient } from '@prisma/client/edge';
-import { withAccelerate } from '@prisma/extension-accelerate';
-
-// Vérifier si nous sommes dans un environnement de navigateur
-const isBrowser = typeof window !== 'undefined';
+import { PrismaClient } from '@prisma/client';
 
 // Ne pas initialiser Prisma dans le navigateur
+const isBrowser = typeof window !== 'undefined';
+
 const prismaClientSingleton = () => {
   if (isBrowser) {
     throw new Error(
@@ -12,18 +10,13 @@ const prismaClientSingleton = () => {
     );
   }
 
+  // Configuration minimale du client Prisma
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  }).$extends(withAccelerate());
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
+  });
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 

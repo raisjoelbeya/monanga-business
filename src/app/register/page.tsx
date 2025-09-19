@@ -223,27 +223,22 @@ export default function RegisterPage() {
             </div>
           </form>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
+          <div className="mt-8">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="px-3 bg-gray-800 text-sm text-gray-400">
+                  Ou inscrivez-vous avec
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800 text-gray-400">
-                Ou continuez avec
-              </span>
+
+            <div className="mt-6">
+              <AuthButtons title="" className="max-w-none" />
             </div>
           </div>
-
-          <AuthButtons />
-        </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-gray-400">
-            Vous avez déjà un compte ?{' '}
-            <Link href="/login" className="font-medium text-blue-400 hover:text-blue-300 transition-colors">
-              Connectez-vous
-            </Link>
-          </p>
         </div>
 
         <div className="mt-8 text-center">

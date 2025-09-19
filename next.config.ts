@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
     
     // Configuration expérimentale
     experimental: {
-        // Options expérimentales ici
+        // Désactive le cache du moteur Prisma
+        disableOptimizedLoading: true
     },
 
     // Configuration des en-têtes de sécurité

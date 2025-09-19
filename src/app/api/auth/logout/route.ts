@@ -8,32 +8,37 @@ export async function POST() {
     
     if (!sessionId) {
       return new NextResponse(
-        JSON.stringify({ error: "No active session" }),
-        { status: 400 }
+        JSON.stringify({ error: "Aucune session active" }),
+        { status: 401 }
       );
     }
 
-    // Invalidate session
+    // Invalider la session
     await lucia.invalidateSession(sessionId);
     
-    // Create blank session cookie
+    // Créer un cookie de session vide
     const sessionCookie = lucia.createBlankSessionCookie();
     
-    // Set the cookie
+    // Définir le cookie de session vide
     (await cookies()).set(
-      sessionCookie.name,
-      sessionCookie.value,
+      sessionCookie.name, 
+      sessionCookie.value, 
       sessionCookie.attributes
     );
 
     return new NextResponse(
       JSON.stringify({ success: true }),
-      { status: 200 }
+      { 
+        status: 200,
+        headers: {
+          'Set-Cookie': sessionCookie.serialize()
+        }
+      }
     );
   } catch (error) {
-    console.error("Logout error:", error);
+    console.error("Erreur de déconnexion:", error);
     return new NextResponse(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Erreur lors de la déconnexion" }),
       { status: 500 }
     );
   }
