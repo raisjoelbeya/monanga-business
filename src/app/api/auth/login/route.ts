@@ -1,10 +1,7 @@
 import { lucia } from "@/lib/lucia";
 import { cookies } from "next/headers";
-import pg from "pg";
-
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL
-});
+import prisma from "@/lib/prisma";
+import { verifyPassword } from "@/lib/server/password";
 
 export async function POST(req: Request) {
   try {
@@ -19,16 +16,16 @@ export async function POST(req: Request) {
     }
 
     // Get user from database
-    const userResult = await pool.query(
-      "SELECT id, password FROM auth_user WHERE username = $1",
-      [username]
-    );
-
-    const user = userResult.rows[0];
+    const user = await prisma.user.findUnique({
+      where: { email: username },
+      select: {
+        id: true,
+        password: true
+      }
+    });
 
     // Verify user exists and password matches
-    // In a real app, use proper password hashing (bcrypt, Argon2, etc.)
-    if (!user || user.password !== password) {
+    if (!user || !(await verifyPassword(password, user.password || ''))) {
       return new Response(
         JSON.stringify({ error: "Invalid username or password" }),
         { status: 401 }
@@ -36,6 +33,7 @@ export async function POST(req: Request) {
     }
 
     // Create session
+ // Create session
     const session = await lucia.createSession(user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
     

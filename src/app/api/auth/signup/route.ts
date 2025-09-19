@@ -1,11 +1,8 @@
 import { lucia } from "@/lib/lucia";
 import { generateId } from "lucia";
 import { cookies } from "next/headers";
-import pg from "pg";
-
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL
-});
+import prisma from "@/lib/prisma";
+import { hashPassword } from "@/lib/server/password";
 
 export async function POST(req: Request) {
   try {
@@ -20,26 +17,32 @@ export async function POST(req: Request) {
     }
 
     // Check if user already exists
-    const userExists = await pool.query(
-      "SELECT id FROM auth_user WHERE username = $1",
-      [username]
-    );
+    const existingUser = await prisma.user.findUnique({
+      where: { email: username },
+      select: { id: true }
+    });
 
-    if (userExists.rows.length > 0) {
+    if (existingUser) {
       return new Response(
-        JSON.stringify({ error: "Username already exists" }),
+        JSON.stringify({ error: "User with this email already exists" }),
         { status: 400 }
       );
     }
 
-    // In a real app, you should hash the password here
-    // For now, we'll store it as is (NOT RECOMMENDED FOR PRODUCTION)
+    // Hash the password
+    const hashedPassword = await hashPassword(password);
     const userId = generateId(15);
     
-    await pool.query(
-      "INSERT INTO auth_user (id, username, password) VALUES ($1, $2, $3)",
-      [userId, username, password]
-    );
+    // Create new user
+    await prisma.user.create({
+      data: {
+        id: userId,
+        email: username,
+        password: hashedPassword,
+        name: username.split('@')[0], // Use part before @ as name
+        emailVerified: false
+      }
+    });
 
     const session = await lucia.createSession(userId, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
@@ -55,13 +58,23 @@ export async function POST(req: Request) {
         success: true,
         userId 
       }), 
-      { status: 201 }
+      { 
+        status: 201,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
   } catch (error) {
     console.error("Signup error:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
   }
 }

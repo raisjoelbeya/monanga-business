@@ -96,11 +96,29 @@ const Footer = () => (
         </div>
       </div>
 
-      <div className="pt-6 border-t border-gray-700 mt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500">
-        <p className="mt-2 sm:mt-0">© {new Date().getFullYear()} Monanga Business. Tous droits réservés.</p>
-        <div className="flex space-x-6 mt-4 sm:mt-0">
-          <Link href="#" className="hover:text-blue-400 transition duration-300">Conditions Générales</Link>
-          <Link href="#" className="hover:text-blue-400 transition duration-300">Politique de Confidentialité</Link>
+      <div className="pt-6 border-t border-gray-700 mt-6 flex flex-col sm:flex-row justify-between items-center">
+        <p className="text-sm text-gray-500 mt-2 sm:mt-0">
+          © {new Date().getFullYear()} Monanga Business. Tous droits réservés.
+        </p>
+        <div className="flex flex-wrap justify-center gap-6 mt-4 sm:mt-0">
+          <Link 
+            href="/terms" 
+            className="text-blue-400 hover:text-blue-300 transition duration-300 text-sm"
+          >
+            Conditions Générales
+          </Link>
+          <Link 
+            href="/privacy" 
+            className="text-blue-400 hover:text-blue-300 transition duration-300 text-sm"
+          >
+            Politique de Confidentialité
+          </Link>
+          <Link 
+            href="/delete-data" 
+            className="text-blue-400 hover:text-blue-300 transition duration-300 text-sm"
+          >
+            Suppression des Données
+          </Link>
         </div>
       </div>
     </div>

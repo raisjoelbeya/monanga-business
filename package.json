@@ -2,31 +2,53 @@
   "name": "monanga-business",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "pnpm lint"
+    "test": "pnpm lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@lucia-auth/adapter-postgresql": "^3.1.2",
-    "@types/pg": "^8.15.5",
+    "@lucia-auth/adapter-prisma": "^4.0.1",
+    "@neondatabase/serverless": "^0.9.4",
+    "@prisma/adapter-pg": "^5.16.1",
+    "@prisma/client": "^5.16.1",
+    "@prisma/extension-accelerate": "^2.0.2",
+    "@types/nodemailer": "^7.0.1",
+    "arctic": "^1.9.2",
+    "bcryptjs": "^3.0.2",
+    "lru-cache": "^10.4.3",
     "lucia": "^3.2.2",
     "next": "15.5.3",
+    "nodemailer": "^6.8.0",
     "pg": "^8.16.3",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.62.0",
+    "zod": "^4.1.9"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^20.19.16",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "eslint": "^9.35.0",
     "eslint-config-next": "15.5.3",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "prisma": "^5.16.1",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2"
   }
 }
