@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers';
 import { OAuth2RequestError } from 'arctic';
 import { generateId } from 'lucia';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google, facebook, auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { logger } from '@/lib/logger';  
+import { logger } from '@/lib/logger';
 
 // Configuration des fournisseurs OAuth
 const providers = {
@@ -194,11 +194,17 @@ const handleOAuthError = (error: unknown, provider: Provider) => {
 
 
 // Main handler
+type RouteParams = {
+    params: {
+        provider: string;
+    };
+};
+
 export async function GET(
-    request: Request,
-    context: { params: { provider: string } }
+    request: NextRequest,
+    context: RouteParams
 ) {
-    const { provider } = context.params as { provider: Provider };
+    const provider = context.params.provider as Provider;
 
     try {
         // Validate provider
