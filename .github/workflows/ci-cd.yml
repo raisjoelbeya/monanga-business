@@ -47,6 +47,22 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
+      - name: Debug environment and dependencies
+        run: |
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "PNPM version: $(pnpm --version)"
+          echo "Current directory: $(pwd)"
+          echo "Environment: $NODE_ENV"
+          echo "Database URL set: ${{ secrets.DATABASE_URL != '' }}"
+          echo "Google Client ID set: ${{ secrets.GOOGLE_CLIENT_ID != '' }}"
+          echo "Facebook Client ID set: ${{ secrets.FACEBOOK_CLIENT_ID != '' }}"
+          echo "Microsoft Client ID set: ${{ secrets.MICROSOFT_CLIENT_ID != '' }}"
+          echo "NextAuth URL set: ${{ secrets.NEXTAUTH_URL != '' }}"
+          ls -la
+          echo "Files in src/app/api/auth:"
+          ls -la src/app/api/auth/
+
       - name: Install Dependencies
         run: |
           pnpm install --frozen-lockfile
@@ -54,15 +70,36 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      - name: Run Migrations (Test DB)
+      - name: Validate environment variables
         run: |
-          wait-on tcp:localhost:5432
-          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} \
-          psql -h localhost -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -f migrations/001_initial_schema.sql
+          echo "Validating required environment variables..."
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is not set"
+            exit 1
+          fi
+          if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+            echo "WARNING: Google OAuth credentials not configured"
+          fi
+          if [ -z "$FACEBOOK_CLIENT_ID" ] || [ -z "$FACEBOOK_CLIENT_SECRET" ]; then
+            echo "WARNING: Facebook OAuth credentials not configured"
+          fi
+          if [ -z "$NEXTAUTH_URL" ]; then
+            echo "ERROR: NEXTAUTH_URL is not set"
+            exit 1
+          fi
+          echo "Environment validation completed"
 
       - name: Run Tests
         env:
           DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@localhost:5432/${{ env.POSTGRES_DB }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || 'dev_google_client_id' }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || 'dev_google_client_secret' }}
+          FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID || 'dev_facebook_client_id' }}
+          FACEBOOK_CLIENT_SECRET: ${{ secrets.FACEBOOK_CLIENT_SECRET || 'dev_facebook_client_secret' }}
+          MICROSOFT_CLIENT_ID: ${{ secrets.MICROSOFT_CLIENT_ID || 'dev_microsoft_client_id' }}
+          MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET || 'dev_microsoft_client_secret' }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
+          NODE_ENV: test
         run: pnpm test
 
   deploy:
@@ -90,7 +127,18 @@ jobs:
         run: pnpm add --global vercel@latest
 
       - name: Deploy to Vercel (production)
-        run: vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID }}
+          FACEBOOK_CLIENT_SECRET: ${{ secrets.FACEBOOK_CLIENT_SECRET }}
+          MICROSOFT_CLIENT_ID: ${{ secrets.MICROSOFT_CLIENT_ID }}
+          MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NODE_ENV: production
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel --prod --yes
 
       - name: Install PostgreSQL client
         run: |
