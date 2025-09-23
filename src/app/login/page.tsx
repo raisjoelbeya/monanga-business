@@ -1,10 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AuthButtons } from '@/components/AuthButtons';
 import Link from 'next/link';
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const message = searchParams.get('message');
@@ -14,6 +15,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo et titre */}
+        
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mb-4">
             <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center mr-3">
@@ -164,5 +166,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

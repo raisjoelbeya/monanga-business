@@ -137,6 +137,7 @@ export function getOAuthProvider(providerId: string): OAuthConfig<OAuthProfile> 
 
 // Vérification des variables d'environnement requises
 export function validateOAuthConfig() {
+
     const errors: string[] = [];
 
     // En développement, on utilise des valeurs par défaut pour tous les fournisseurs
@@ -170,9 +171,4 @@ export function validateOAuthConfig() {
             console.warn('Continuing in development mode with default OAuth values');
         }
     }
-}
-
-// Valider la configuration au chargement du module
-if (typeof window === 'undefined') {
-    validateOAuthConfig();
 }

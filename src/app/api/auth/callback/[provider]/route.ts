@@ -1,10 +1,16 @@
 import { cookies } from 'next/headers';
 import { OAuth2RequestError } from 'arctic';
 import { generateId } from 'lucia';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+
 import { google, facebook, auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+
+// Type pour les paramètres de route
+type Params = {
+  provider: string;
+};
 
 // Configuration des fournisseurs OAuth
 const providers = {
@@ -28,7 +34,7 @@ type OAuthUserInfo = {
 };
 
 // Helper functions
-const getOAuthParams = (request: Request) => {
+const getOAuthParams = (request: NextRequest) => {
     const url = new URL(request.url);
     return {
         code: url.searchParams.get('code'),
@@ -38,11 +44,34 @@ const getOAuthParams = (request: Request) => {
 
 const getStoredParams = async (provider: Provider) => {
     const cookieStore = await cookies();
-    return {
-        codeVerifier: cookieStore.get('code_verifier')?.value,
-        storedState: cookieStore.get(`oauth_${provider}_state`)?.value,
-        redirectTo: cookieStore.get('oauth_redirect_uri')?.value || '/',
-    };
+    const stateCookie = cookieStore.get(`oauth_${provider}_state`)?.value;
+    let storedState: string | undefined;
+    let codeVerifier: string | undefined;
+    let redirectTo: string | undefined;
+
+    if (stateCookie) {
+        try {
+            const parsed = JSON.parse(stateCookie);
+            if (parsed && typeof parsed === 'object') {
+                storedState = parsed.state;
+                codeVerifier = parsed.codeVerifier;
+                redirectTo = parsed.redirectTo;
+            }
+        } catch {
+            // state cookie is a plain string
+            storedState = stateCookie;
+        }
+    }
+
+    // Fallback to legacy separate cookies if not found in combined cookie
+    if (!codeVerifier) {
+        codeVerifier = cookieStore.get('code_verifier')?.value;
+    }
+    if (!redirectTo) {
+        redirectTo = cookieStore.get('oauth_redirect_uri')?.value || '/';
+    }
+
+    return { codeVerifier, storedState, redirectTo };
 };
 
 const validateOAuthParams = (
@@ -69,12 +98,21 @@ const validateOAuthParams = (
     return { valid: true, redirectTo };
 };
 
-const getProviderConfig = (provider: Provider) => {
-    const config = providers[provider];
+interface ProviderInstance {
+    validateAuthorizationCode: (code: string, verifier: string) => Promise<{ accessToken: string }>;
+}
+
+interface ProviderConfig {
+    instance: ProviderInstance;
+    userInfoUrl: string;
+}
+
+const getProviderConfig = (provider: string): ProviderConfig => {
+    const config = providers[provider as keyof typeof providers];
     if (!config) {
-        throw new Error(`Fournisseur OAuth non pris en charge: ${provider}`);
+        throw new Error(`Provider ${provider} not supported`);
     }
-    return config;
+    return config as ProviderConfig;
 };
 
 const exchangeAuthorizationCode = async (
@@ -195,9 +233,10 @@ const handleOAuthError = (error: unknown, provider: Provider) => {
 // Main handler
 export async function GET(
     request: NextRequest,
-    { params }: { params: { provider: string } }
-) {
-    const provider = params.provider as Provider;
+    { params }: { params: Promise<Params> }
+): Promise<NextResponse> {
+    const { provider: providerParam } = await params;
+    const provider = providerParam as Provider;
 
     try {
         // Validate provider

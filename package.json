@@ -2,7 +2,7 @@
   "name": "monanga-business",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.17.1",
   "engines": {
     "node": ">=18.0.0"
   },
