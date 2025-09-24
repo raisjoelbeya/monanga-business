@@ -38,17 +38,8 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // Type assertion pour accéder aux propriétés de l'utilisateur
-    const userWithAttributes = user as unknown as {
-      email: string;
-      email_verified: boolean;
-      name: string | null;
-      image: string | null;
-      role: string;
-    };
-    
     // Vérifier le rôle administrateur
-    if (userWithAttributes.role !== 'ADMIN') {
+    if (user.role !== 'ADMIN') {
         return new NextResponse(
             JSON.stringify({error: 'Accès non autorisé'}),
             {status: 403, headers: {'Content-Type': 'application/json'}}
