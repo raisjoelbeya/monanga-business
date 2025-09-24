@@ -80,10 +80,10 @@ export async function GET(request: NextRequest) {
     const createCookieOptions = (path: string, maxAge: number) => ({
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',
+      sameSite: (process.env.NODE_ENV === 'production' ? 'lax' : 'lax') as 'lax' | 'none',
       path,
       maxAge,
-      domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined
+      domain: process.env.NODE_ENV === 'production' ? `.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'monanga-business.vercel.app'}` : undefined
     } as const);
 
     const stateCookie = {

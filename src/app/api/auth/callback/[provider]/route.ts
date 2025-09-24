@@ -281,7 +281,7 @@ const createUserSession = async (userId: string, redirectTo: string) => {
             value: sessionCookie.value,
             ...sessionCookie.attributes,
             // S'assurer que le cookie est accessible sur tous les sous-domaines en production
-            domain: process.env.NODE_ENV === 'production' ? '.votre-domaine.com' : undefined,
+            domain: process.env.NODE_ENV === 'production' ? `.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'monanga-business.vercel.app'}` : undefined,
             // Forcer le drapeau secure en production
             secure: process.env.NODE_ENV === 'production',
             // Utiliser SameSite=Lax pour la compatibilité

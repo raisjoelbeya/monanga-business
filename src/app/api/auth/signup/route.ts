@@ -17,16 +17,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: username },
+    // Normaliser l'email en minuscules
+    const normalizedEmail = username.toLowerCase().trim();
+    
+    // Vérifier si l'utilisateur existe déjà (insensible à la casse)
+    const existingUser = await prisma.user.findFirst({
+      where: { 
+        email: {
+          equals: normalizedEmail,
+          mode: 'insensitive'
+        }
+      },
       select: { id: true }
     });
 
     if (existingUser) {
       return new Response(
-        JSON.stringify({ error: "User with this email already exists" }),
-        { status: 400 }
+        JSON.stringify({ 
+          error: "Un compte avec cette adresse email existe déjà",
+          code: "EMAIL_ALREADY_EXISTS"
+        }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
@@ -34,11 +48,11 @@ export async function POST(req: Request) {
     const hashedPassword = await hashPassword(password);
     const userId = generateId(15);
     
-    // Create new user with generated username
+    // Créer un nouvel utilisateur avec email en minuscules
     const userData = {
       id: userId,
-      email: username,
-      username: await generateUsername(username), // Attendre la résolution de la promesse
+      email: normalizedEmail,
+      username: await generateUsername(normalizedEmail),
       password: hashedPassword,
       emailVerified: false,
       // Additional fields can be added here
@@ -46,9 +60,27 @@ export async function POST(req: Request) {
       // lastName: '',
     };
 
-    await prisma.user.create({
-      data: userData
-    });
+    try {
+      await prisma.user.create({
+        data: userData
+      });
+    } catch (error: any) {
+      // Gérer spécifiquement les erreurs de contrainte d'unicité
+      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Un compte avec cette adresse email existe déjà",
+            code: "EMAIL_ALREADY_EXISTS"
+          }),
+          { 
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      // Relancer les autres erreurs
+      throw error;
+    }
 
     const session = await lucia.createSession(userId, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
