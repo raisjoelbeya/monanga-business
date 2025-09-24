@@ -7,40 +7,56 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // Use a non-pooled connection string for migrations (e.g., Neon primary, not the pooler)
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+// Modèle utilisateur principal
 model User {
-  id            String    @id @default(cuid())
-  username      String?   @unique
-  email         String?   @unique
-  password      String?
-  name          String?
-  emailVerified Boolean   @default(false)
-  emailVerificationToken     String?
-  emailVerificationExpires   DateTime?
-  image                      String?
-  resetToken                 String?
-  resetTokenExpiry           DateTime?
-  role          String    @default("USER")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  sessions      Session[]
-
-  @@map("auth_user")
+  // Identifiants
+  id              String   @id @default(cuid())
+  email           String?  @unique
+  username        String?  @unique
+  
+  // Informations personnelles
+  firstName       String?
+  lastName        String?
+  fullName        String?  @default("")  // Peut être généré à partir de firstName + lastName
+  image           String?  // URL de l'avatar
+  
+  // Authentification
+  password        String?  // Hash du mot de passe
+  emailVerified   Boolean  @default(false)
+  
+  // Récupération de mot de passe
+  resetToken      String?
+  resetTokenExpiry DateTime?
+  
+  // Rôle et permissions
+  role            String   @default("USER")  // USER, ADMIN, etc.
+  
+  // Métadonnées
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  sessions        Session[]
+  
+  @@map("users")
 }
 
+// Session utilisateur
 model Session {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  expiresAt    DateTime @map("expires_at")
+  userAgent    String?  @map("user_agent")  // Navigateur et OS de l'utilisateur
+  ipAddress    String?  @map("ip_address")  // Adresse IP de l'utilisateur
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  @@map("user_session")
-  @@index([expiresAt], map: "idx_user_session_expires_at")
-  @@index([userId], map: "idx_user_session_user_id")
+  @@map("sessions")
+  @@index([expiresAt], map: "idx_session_expires_at")
+  @@index([userId], map: "idx_session_user_id")
 }

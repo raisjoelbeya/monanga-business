@@ -123,40 +123,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Prisma Migrate Deploy
+      - name: Run database migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL }}
           NODE_ENV: production
         run: |
           pnpm prisma generate
           pnpm prisma migrate deploy
 
-      - name: Install Vercel CLI
-        run: pnpm add --global vercel@latest
-
-      - name: Install Vercel CLI and authenticate
-        run: |
-          echo "//vercel.com/your-vercel-token = ${{ secrets.VERCEL_TOKEN }}" > ~/.npmrc
-          echo "//vercel.com/:_authToken=${{ secrets.VERCEL_TOKEN }}" >> ~/.npmrc
-          npm install -g vercel@latest
-
-      - name: Deploy to Vercel (production)
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          # Configuration de l'application
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'https://your-production-url.vercel.app' }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          # Fournisseurs OAuth
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || '' }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || '' }}
-          FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID || '' }}
-          FACEBOOK_CLIENT_SECRET: ${{ secrets.FACEBOOK_CLIENT_SECRET || '' }}
-          NODE_ENV: production
-        run: |
-          echo "Starting Vercel deployment..."
-          vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
-          echo "Deployment completed!"
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
