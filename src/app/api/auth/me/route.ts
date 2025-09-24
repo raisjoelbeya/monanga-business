@@ -36,7 +36,9 @@ export async function GET() {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
+        username: true,
         image: true,
         role: true
       }
@@ -50,13 +52,17 @@ export async function GET() {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
           image: user.image,
-          role: user.role
+          role: user.role,
+          // Pour la rétrocompatibilité avec le code existant qui pourrait attendre un champ name
+          name: user.firstName || user.username || user.email.split('@')[0]
         }
       }),
       { status: 200 }

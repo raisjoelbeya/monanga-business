@@ -3,6 +3,7 @@ import {OAuth2RequestError} from 'arctic';
 import {generateId} from 'lucia';
 import {NextRequest, NextResponse} from 'next/server';
 import {auth, facebook, google} from '@/lib/auth';
+import {generateUsername} from '@/lib/user-utils';
 import prisma from '@/lib/prisma';
 import {logger} from '@/lib/logger';
 
@@ -170,9 +171,16 @@ const upsertUser = async (userInfo: OAuthUserInfo) => {
         if (existingUser) {
             // Mettre à jour l'utilisateur existant si nécessaire
             userId = existingUser.id;
+            // Extraire le prénom et le nom à partir de userInfo.name s'il existe
+            const nameParts = userInfo.name ? userInfo.name.split(' ') : [];
+            const firstName = nameParts[0] || existingUser.firstName;
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : existingUser.lastName || '';
+            
             await prisma.user.update({
-                where: {id: userId}, data: {
-                    name: userInfo.name || existingUser.name,
+                where: { id: userId }, 
+                data: {
+                    firstName,
+                    lastName,
                     image: formatProfileImage(userInfo.picture) || existingUser.image,
                     emailVerified: userInfo.email_verified ?? existingUser.emailVerified,
                     updatedAt: new Date(),
@@ -183,12 +191,19 @@ const upsertUser = async (userInfo: OAuthUserInfo) => {
             userId = generateId(15);
             const password = generateId(32); // Generate a random password for OAuth users
 
+            // Extraire le prénom et le nom à partir de userInfo.name ou utiliser l'email comme prénom
+            const nameParts = userInfo.name ? userInfo.name.split(' ') : [userInfo.email.split('@')[0]];
+            const firstName = nameParts[0];
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+            
             await prisma.user.create({
                 data: {
                     id: userId,
-                    password: password, // In a real app, this should be hashed
+                    password: password, // Dans une application réelle, il faudrait hasher ce mot de passe
                     email: userInfo.email,
-                    name: userInfo.name || userInfo.email.split('@')[0],
+                    firstName,
+                    lastName,
+                    username: generateUsername(userInfo.email), // Générer un nom d'utilisateur unique
                     image: formatProfileImage(userInfo.picture),
                     emailVerified: userInfo.email_verified ?? false,
                     role: 'USER',

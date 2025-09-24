@@ -15,14 +15,24 @@ export const auth = new Lucia(adapter, {
             path: "/",
         },
     },
-    getUserAttributes: (userData) => ({
-        id: userData.id,
-        email: userData.email,
-        email_verified: userData.email_verified,
-        name: userData.name,
-        image: userData.image,
-        role: userData.role,
-    }),
+    getUserAttributes: (userData) => {
+        const fullName = userData.firstName && userData.lastName 
+            ? `${userData.firstName} ${userData.lastName}`.trim()
+            : null;
+            
+        return {
+            id: userData.id,
+            email: userData.email,
+            email_verified: userData.emailVerified,
+            name: userData.firstName || userData.username || userData.email.split('@')[0],
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            fullName: fullName,
+            username: userData.username,
+            image: userData.image,
+            role: userData.role,
+        };
+    },
 });
 
 // Fournisseurs OAuth
@@ -55,8 +65,11 @@ declare module "lucia" {
 interface DatabaseUserAttributes {
     id: string;
     email: string;
-    email_verified: boolean;
-    name: string | null;
+    emailVerified: boolean;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
     image: string | null;
     role: string;
+    name?: string; // Pour la rétrocompatibilité
 }

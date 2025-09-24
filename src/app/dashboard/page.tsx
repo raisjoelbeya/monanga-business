@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { getClientSession } from '@/lib/auth-helpers';
 import { toTitleCase } from '@/lib/utils/string';
 import Image from 'next/image';
+import { ChangePasswordForm } from '@/components/ChangePasswordForm';
+import { UserGreeting } from '@/components/UserGreeting';
 
 type User = {
   id: string;
@@ -95,15 +97,20 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
           <div className="flex items-center space-x-4">
             <span className="text-gray-300">{user.name ? toTitleCase(user.name) : user.email}</span>
-            {user.image && (
-              <Image 
-                src={user.image} 
-                alt="Photo de profil" 
-                className="h-10 w-10 rounded-full border-2 border-blue-500"
-                width={40}
-                height={40}
-              />
-            )}
+            <div className="flex items-center">
+              {user?.image && (
+                <Image 
+                  src={user.image} 
+                  alt="Photo de profil" 
+                  className="h-10 w-10 rounded-full border-2 border-blue-500"
+                  width={40}
+                  height={40}
+                />
+              )}
+              <div className="ml-3">
+                <UserGreeting showEmail={false} />
+              </div>
+            </div>
             <button
               onClick={handleLogout}
               className="ml-4 px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
@@ -232,11 +239,15 @@ export default function Dashboard() {
                       <div className="border-b border-gray-700 pb-6">
                         <h4 className="text-lg font-medium text-white mb-4">Sécurité</h4>
                         <div className="space-y-4">
+                          <div className="bg-gray-700/50 p-4 rounded-lg">
+                            <h5 className="font-medium text-white mb-3">Changer le mot de passe</h5>
+                            <ChangePasswordForm />
+                          </div>
                           <button
                             onClick={handleLogout}
-                            className="w-full md:w-auto px-4 py-2 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            className="w-full md:w-auto px-4 py-2 text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                           >
-                            Changer le mot de passe
+                            Se déconnecter
                           </button>
                         </div>
                       </div>

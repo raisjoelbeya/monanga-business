@@ -7,7 +7,8 @@ const prisma = new PrismaClient();
 
 // Schéma de validation avec Zod
 const registerSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
+  lastName: z.string().optional(),
   email: z.string().email('Adresse email invalide'),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
 });
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password } = validation.data;
+    const { firstName, lastName, email, password } = validation.data;
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await prisma.user.findUnique({
@@ -45,15 +46,20 @@ export async function POST(req: Request) {
     // Créer l'utilisateur
     const user = await prisma.user.create({
       data: {
-        name,
+        firstName,
+        lastName: lastName || '',
+        username: email.split('@')[0] + Math.floor(Math.random() * 1000), // Générer un nom d'utilisateur unique
         email: email.toLowerCase(),
         password: hashedPassword,
         emailVerified: false,
+        role: 'USER',
       },
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
+        username: true,
       },
     });
 

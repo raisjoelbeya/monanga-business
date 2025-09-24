@@ -3,6 +3,7 @@ import { generateId } from "lucia";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { hashPassword } from "@/lib/server/password";
+import { generateUsername } from "@/lib/user-utils";
 
 export async function POST(req: Request) {
   try {
@@ -33,15 +34,20 @@ export async function POST(req: Request) {
     const hashedPassword = await hashPassword(password);
     const userId = generateId(15);
     
-    // Create new user
+    // Create new user with generated username
+    const userData = {
+      id: userId,
+      email: username,
+      username: generateUsername(username),
+      password: hashedPassword,
+      emailVerified: false,
+      // Additional fields can be added here
+      // firstName: '',
+      // lastName: '',
+    };
+
     await prisma.user.create({
-      data: {
-        id: userId,
-        email: username,
-        password: hashedPassword,
-        name: username.split('@')[0], // Use part before @ as name
-        emailVerified: false
-      }
+      data: userData
     });
 
     const session = await lucia.createSession(userId, {});

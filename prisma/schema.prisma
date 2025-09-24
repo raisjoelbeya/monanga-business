@@ -16,13 +16,12 @@ datasource db {
 model User {
   // Identifiants
   id              String   @id @default(cuid())
-  email           String?  @unique
-  username        String?  @unique
+  email           String   @unique
+  username        String   @unique
   
   // Informations personnelles
   firstName       String?
   lastName        String?
-  fullName        String?  @default("")  // Peut être généré à partir de firstName + lastName
   image           String?  // URL de l'avatar
   
   // Authentification
