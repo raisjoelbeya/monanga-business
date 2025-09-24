@@ -3,6 +3,22 @@ import { generateCodeVerifier, generateState } from 'arctic';
 import { cookies } from 'next/headers';
 import { getOAuthProvider } from '@/lib/auth-config';
 import { authRateLimit } from '@/lib/rate-limit';
+import { randomBytes } from 'crypto';
+import type { Redis } from 'ioredis';
+
+// Redis est optionnel - seulement utilisé si REDIS_URL est configuré
+let RedisClient: Redis | null = null;
+
+// Chargement asynchrone de Redis uniquement si nécessaire
+if (process.env.REDIS_URL) {
+  import('ioredis')
+    .then((Redis) => {
+      RedisClient = new Redis.default(process.env.REDIS_URL!);
+    })
+    .catch((error) => {
+      console.warn('Redis n\'a pas pu être initialisé:', error);
+    });
+}
 
 export async function GET(request: NextRequest) {
   // Appliquer la limitation de taux
@@ -14,7 +30,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const providerId = searchParams.get('provider');
-    const redirectTo = searchParams.get('redirect_to') || '/dashboard';
+    // Utilisation de la valeur de redirection si nécessaire plus tard
+    const _redirectTo = searchParams.get('redirect_to') || '/dashboard';
 
     if (!providerId) {
       return new NextResponse(
@@ -26,7 +43,7 @@ export async function GET(request: NextRequest) {
     const provider = getOAuthProvider(providerId);
     if (!provider) {
       return new NextResponse(
-        JSON.stringify({ error: 'Unsupported provider' }),
+        JSON.stringify({ error: 'Fournisseur non pris en charge' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -34,6 +51,7 @@ export async function GET(request: NextRequest) {
     // Générer un état et un code_verifier pour PKCE
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
+    const sessionId = randomBytes(16).toString('hex');
     
     // Créer l'URL d'autorisation
     const authorizationUrl = new URL(provider.authorization.url);
@@ -60,24 +78,53 @@ export async function GET(request: NextRequest) {
 
     authorizationUrl.search = params.toString();
 
-    // Stocker l'état et le code_verifier dans un cookie sécurisé
-    const cookieOptions = {
+    // Fonction utilitaire pour créer des options de cookie sécurisées
+    const createCookieOptions = (path: string, maxAge: number) => ({
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 10, // 10 minutes
-      path: '/',
-      sameSite: 'lax' as const,
+      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',
+      path,
+      maxAge,
+      domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined
+    } as const);
+
+    const stateCookie = {
+      name: 'state',
+      value: state,
+      options: createCookieOptions('/', 60 * 15) // 15 minutes
     };
 
-    (await cookies()).set(
-      `oauth_${provider.id}_state`,
-      JSON.stringify({
-        state,
-        codeVerifier,
-        redirectTo,
-      }),
-      cookieOptions
-    );
+    const codeVerifierCookie = {
+      name: 'code_verifier',
+      value: codeVerifier,
+      options: createCookieOptions('/api/auth/callback', 60 * 15) // 15 minutes
+    };
+
+    const sessionCookie = {
+      name: 'session_id',
+      value: sessionId,
+      options: createCookieOptions('/', 60 * 60 * 24 * 7) // 7 days
+    };
+
+    // Définir les cookies
+    (await cookies()).set(stateCookie.name, stateCookie.value, stateCookie.options);
+    (await cookies()).set(codeVerifierCookie.name, codeVerifierCookie.value, codeVerifierCookie.options);
+    (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.options);
+
+    // Stocker également l'état et le code_verifier dans une session côté serveur ou un cache
+    if (RedisClient) {
+      try {
+        await RedisClient.set(`oauth:${sessionId}`, JSON.stringify({
+          state,
+          codeVerifier,
+          provider: provider.id,
+          timestamp: Date.now()
+        }), 'EX', 60 * 15); // 15 minutes expiration
+      } catch (error) {
+        console.error('Erreur lors de la connexion à Redis:', error);
+        // Continuer même en cas d'erreur Redis
+      }
+    }
 
     // Rediriger vers l'URL d'autorisation
     return NextResponse.redirect(authorizationUrl.toString());

@@ -55,8 +55,8 @@ export const oauthProviders: OAuthConfig<OAuthProfile>[] = [
         },
         token: 'https://oauth2.googleapis.com/token',
         userinfo: 'https://www.googleapis.com/oauth2/v1/userinfo',
-        clientId: process.env.GOOGLE_CLIENT_ID || '',
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
         profile(profile) {
             return {
                 id: profile.sub,
@@ -71,61 +71,55 @@ export const oauthProviders: OAuthConfig<OAuthProfile>[] = [
         name: 'Facebook',
         type: 'oauth',
         version: '2.0',
+        clientId: process.env.FACEBOOK_CLIENT_ID ?? '',
+        clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? '',
         authorization: {
-            url: 'https://www.facebook.com/v12.0/dialog/oauth',
+            url: 'https://www.facebook.com/v19.0/dialog/oauth',
             params: {
                 scope: 'email public_profile',
+                auth_type: 'rerequest', // Demande les permissions manquantes si nécessaire
+                display: 'popup',
             },
         },
-        token: 'https://graph.facebook.com/oauth/access_token',
+        token: {
+            url: 'https://graph.facebook.com/v19.0/oauth/access_token',
+        },
         userinfo: {
             url: 'https://graph.facebook.com/me',
-            params: { fields: 'id,name,email,picture.type(large)' },
-        },
-        clientId: process.env.FACEBOOK_CLIENT_ID || '',
-        clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
-        profile(profile) {
-            return {
-                id: profile.id,
-                name: profile.name || 'Utilisateur',
-                email: profile.email || '',
-                image: profile.picture && typeof profile.picture === 'object' && profile.picture.data?.url
-                    ? profile.picture.data.url
-                    : undefined,
-            };
-        },
-    },
-    {
-        id: 'microsoft',
-        name: 'Microsoft',
-        type: 'oauth',
-        version: '2.0',
-        authorization: {
-            url: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
             params: {
-                scope: 'openid profile email',
-                response_type: 'code',
+                fields: 'id,name,email,picture.type(large),first_name,last_name',
             },
         },
-        token: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-        userinfo: 'https://graph.microsoft.com/v1.0/me',
-        clientId: process.env.MICROSOFT_CLIENT_ID || '',
-        clientSecret: process.env.MICROSOFT_CLIENT_SECRET || '',
         profile(profile) {
+            // Gestion sécurisée de l'image de profil
+            let imageUrl: string | undefined;
+            if (profile.picture) {
+                if (typeof profile.picture === 'string') {
+                    imageUrl = profile.picture;
+                } else if (typeof profile.picture === 'object' && profile.picture.data) {
+                    imageUrl = profile.picture.data.url;
+                }
+            }
+
+            // Créer un nom à partir du prénom et du nom si le nom complet n'est pas disponible
+            let name = 'Utilisateur';
+            if (typeof profile.name === 'string' && profile.name.trim()) {
+                name = profile.name.trim();
+            } else {
+                const firstName = typeof profile.first_name === 'string' ? profile.first_name.trim() : '';
+                const lastName = typeof profile.last_name === 'string' ? profile.last_name.trim() : '';
+                name = [firstName, lastName].filter(s => s).join(' ').trim() || 'Utilisateur';
+            }
+            
+            // L'email est requis, on utilise une valeur par défaut si non fourni
+            const email = profile.email || `${profile.id}@facebook.none`;
+
             return {
-                id: profile.sub || profile.id,
-                name: profile.name || 'Utilisateur',
-                email: profile.email || profile.preferred_username || '',
-                image: typeof profile.picture === 'string' ? profile.picture : undefined,
+                id: profile.id || 'unknown',
+                name: name,
+                email: email,
+                image: imageUrl,
             };
-        },
-        style: {
-            logo: '/microsoft.svg',
-            logoDark: '/microsoft.svg',
-            bg: '#ffffff',
-            text: '#000000',
-            bgDark: '#2f2f2f',
-            textDark: '#ffffff',
         },
     },
 ];
@@ -146,8 +140,6 @@ export function validateOAuthConfig() {
         if (!process.env.GOOGLE_CLIENT_SECRET) process.env.GOOGLE_CLIENT_SECRET = 'dev_google_client_secret';
         if (!process.env.FACEBOOK_CLIENT_ID) process.env.FACEBOOK_CLIENT_ID = 'dev_facebook_client_id';
         if (!process.env.FACEBOOK_CLIENT_SECRET) process.env.FACEBOOK_CLIENT_SECRET = 'dev_facebook_client_secret';
-        if (!process.env.MICROSOFT_CLIENT_ID) process.env.MICROSOFT_CLIENT_ID = 'dev_microsoft_client_id';
-        if (!process.env.MICROSOFT_CLIENT_SECRET) process.env.MICROSOFT_CLIENT_SECRET = 'dev_microsoft_client_secret';
     }
 
     // En production, on vérifie que toutes les variables sont définies
@@ -157,9 +149,6 @@ export function validateOAuthConfig() {
         }
         if (!process.env.FACEBOOK_CLIENT_ID || !process.env.FACEBOOK_CLIENT_SECRET) {
             errors.push('Facebook OAuth credentials are not configured');
-        }
-        if (!process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
-            errors.push('Microsoft OAuth credentials are not configured');
         }
     }
 

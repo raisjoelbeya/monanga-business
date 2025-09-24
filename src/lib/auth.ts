@@ -29,7 +29,7 @@ export const auth = new Lucia(adapter, {
 export const google = new Google(
     process.env.GOOGLE_CLIENT_ID!,
     process.env.GOOGLE_CLIENT_SECRET!,
-    `${process.env.NEXTAUTH_URL}/login/google/callback` // mieux que api/auth
+    `${process.env.NEXTAUTH_URL}/api/auth/callback/google`
 );
 
 // Alias for backward compatibility
@@ -38,7 +38,7 @@ export const googleAuth = google;
 export const facebook = new Facebook(
     process.env.FACEBOOK_CLIENT_ID!,
     process.env.FACEBOOK_CLIENT_SECRET!,
-    `${process.env.NEXTAUTH_URL}/login/facebook/callback`
+    `${process.env.NEXTAUTH_URL}/api/auth/callback/facebook`
 );
 
 // Alias for backward compatibility

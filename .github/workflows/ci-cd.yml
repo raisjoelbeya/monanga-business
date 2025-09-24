@@ -57,7 +57,6 @@ jobs:
           echo "Database URL set: ${{ secrets.DATABASE_URL != '' }}"
           echo "Google Client ID set: ${{ secrets.GOOGLE_CLIENT_ID != '' }}"
           echo "Facebook Client ID set: ${{ secrets.FACEBOOK_CLIENT_ID != '' }}"
-          echo "Microsoft Client ID set: ${{ secrets.MICROSOFT_CLIENT_ID != '' }}"
           echo "NextAuth URL set: ${{ secrets.NEXTAUTH_URL != '' }}"
           ls -la
           echo "Files in src/app/api/auth:"
@@ -96,8 +95,6 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || 'dev_google_client_secret' }}
           FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID || 'dev_facebook_client_id' }}
           FACEBOOK_CLIENT_SECRET: ${{ secrets.FACEBOOK_CLIENT_SECRET || 'dev_facebook_client_secret' }}
-          MICROSOFT_CLIENT_ID: ${{ secrets.MICROSOFT_CLIENT_ID || 'dev_microsoft_client_id' }}
-          MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET || 'dev_microsoft_client_secret' }}
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
           NODE_ENV: test
         run: pnpm test
@@ -149,7 +146,7 @@ jobs:
           NODE_ENV: production
         run: |
           echo "Starting Vercel deployment..."
-          vercel --prod --confirm --token ${{ secrets.VERCEL_TOKEN }}
+          vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
           echo "Deployment completed!"
 
       - name: Install PostgreSQL client
