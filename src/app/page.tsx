@@ -1,5 +1,7 @@
 import Link from "next/link";
 import NewsletterForm from "@/components/NewsletterForm";
+import { Logo } from "@/components/Logo";
+import Image from "next/image";
 
 // Composant réutilisable pour les cartes de fonctionnalités
 const FeatureCard = ({ title, description, icon }: { title: string; description: string; icon: React.ReactNode }) => (
@@ -56,10 +58,8 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
           <div className="flex items-center mb-4">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3-9v1a4 4 0 004 4v0a4 4 0 014-4v1m.673 1.673a2 2 0 01-1.707 2.707V21a2 2 0 01-2 2H6.74a2 2 0 01-2-2V6.911a2 2 0 01-.673-1.707V3h7.525c1.158 0 2.152.728 2.257 1.846V21a2 2 0 01-2.257 2H6.74" />
-              </svg>
+            <div className="mr-3">
+              <Logo size="sm" withText={false} />
             </div>
             <span className="text-white text-xl font-bold">Monanga Business</span>
           </div>
@@ -98,7 +98,7 @@ const Footer = () => (
 
       <div className="pt-6 border-t border-gray-700 mt-6 flex flex-col sm:flex-row justify-between items-center">
         <p className="text-sm text-gray-500 mt-2 sm:mt-0">
-          © {new Date().getFullYear()} Monanga Business. Tous droits réservés.
+          {new Date().getFullYear()} Monanga Business. Tous droits réservés.
         </p>
         <div className="flex flex-wrap justify-center gap-6 mt-4 sm:mt-0">
           <Link 
@@ -128,53 +128,50 @@ const Footer = () => (
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-            {/* Hero Section */}
-            <header className="relative h-screen flex items-center justify-center">
-                {/* Background Image */}
-                <div className="absolute inset-0 bg-cover bg-center z-0" style={{
-                    backgroundImage: "url('https://images.unsplash.com/photo-1597075558724-af092979f798?auto=format&fit=crop&w=1950&q=80')"
-                }}>
-                    <div className="absolute inset-0 bg-black opacity-60"></div>
-                </div>
+      {/* Hero Section */}
+      <header className="relative h-screen flex items-center justify-center">
+        {/* Background Image */}
+        <div className="absolute inset-0 bg-cover bg-center z-0" style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1597075558724-af092979f798?auto=format&fit=crop&w=1950&q=80')"
+        }}>
+          <div className="absolute inset-0 bg-black opacity-60"></div>
+        </div>
 
-                {/* Content */}
-                <div className="relative max-w-4xl text-center z-10 p-4">
-                    <div className="flex items-center justify-center mb-6">
-                        {/* Logo Placeholder */}
-                        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mr-4">
-                            <span className="text-2xl font-bold text-white">MB</span>
-                        </div>
-                        <h2 className="text-4xl font-bold">Monanga Business</h2>
-                    </div>
+        {/* Content */}
+        <div className="relative max-w-4xl text-center z-10 p-4">
+          <div className="flex flex-col items-center justify-center mb-6">
+            <div className="mb-4">
+              <Logo size="lg" withText={true} />
+            </div>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6">
+              Votre Partenaire <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                E-commerce à Kinshasa
+              </span>
+            </h1>
+          </div>
 
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6">
-                        Votre Partenaire <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                          E-commerce à Kinshasa
-                        </span>
-                    </h1>
+          <p className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto">
+            Découvrez une sélection exclusive de produits premium livrés rapidement
+            dans toute la ville de Kinshasa. Service client 24/7.
+          </p>
 
-                    <p className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto">
-                        Découvrez une sélection exclusive de produits premium livrés rapidement
-                        dans toute la ville de Kinshasa. Service client 24/7.
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link
-                            href="/products"
-                            className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg sm:text-xl font-semibold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-                        >
-                            Découvrir les produits
-                        </Link>
-                        <Link 
-                            href="/auth"
-                            className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-800 text-lg sm:text-xl font-semibold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-                        >
-                            S&apos;inscrire / Se connecter
-                        </Link>
-                    </div>
-                </div>
-            </header>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/products"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg sm:text-xl font-semibold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              Découvrir les produits
+            </Link>
+            <Link 
+              href="/auth"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-800 text-lg sm:text-xl font-semibold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              S&apos;inscrire / Se connecter
+            </Link>
+          </div>
+        </div>
+      </header>
 
             {/* Features Section */}
             <section className="py-16 bg-gray-800">

@@ -3,6 +3,7 @@
 import {useState} from 'react';
 import {auth} from '@/lib/api';
 import {useRouter} from 'next/navigation';
+import { Logo } from '@/components/Logo';
 
 type AuthMode = 'login' | 'signup';
 
@@ -119,19 +120,20 @@ export default function AuthForm() {
         window.location.href = `/api/auth?provider=${provider}&redirect_to=${encodeURIComponent(redirectTo)}`;
     };
 
-    return (<div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
+    return (
+      <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
         <div className="text-center">
-            <div className="flex items-center justify-center mb-4">
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-xl font-bold text-white">MB</span>
-                </div>
-                <h2 className="text-3xl font-extrabold text-white">
-                    {mode === 'login' ? 'Connexion' : 'Inscription'}
-                </h2>
+          <div className="flex flex-col items-center justify-center mb-6">
+            <div className="mb-4">
+              <Logo size="md" withText={false} />
             </div>
+            <h2 className="text-3xl font-extrabold text-white">
+              {mode === 'login' ? 'Connexion' : 'Inscription'}
+            </h2>
             <p className="mt-2 text-gray-400">
-                {mode === 'login' ? 'Bienvenue de retour ! Connectez-vous à votre compte.' : 'Rejoignez-nous et découvrez nos offres exclusives.'}
+              {mode === 'login' ? 'Bienvenue de retour ! Connectez-vous à votre compte.' : 'Rejoignez-nous et découvrez nos offres exclusives.'}
             </p>
+          </div>
         </div>
 
         {error && (<div className="p-4 text-red-400 bg-red-900/30 border border-red-800 rounded-lg">
