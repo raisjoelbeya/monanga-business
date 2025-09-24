@@ -158,9 +158,11 @@ const formatProfileImage = (picture?: OAuthUserInfo['picture']): string | null =
 
 const upsertUser = async (userInfo: OAuthUserInfo) => {
     try {
-        // Vérifier si l'utilisateur existe déjà par email
-        const existingUser = await prisma.user.findUnique({
-            where: {email: userInfo.email},
+        // Vérifier si l'utilisateur existe déjà par email ou username
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                email: userInfo.email,
+            },
         });
 
         let userId: string;
@@ -179,15 +181,19 @@ const upsertUser = async (userInfo: OAuthUserInfo) => {
         } else {
             // Créer un nouvel utilisateur avec Lucia
             userId = generateId(15);
+            const password = generateId(32); // Generate a random password for OAuth users
 
             await prisma.user.create({
                 data: {
                     id: userId,
+                    password: password, // In a real app, this should be hashed
                     email: userInfo.email,
-                    name: userInfo.name || null,
+                    name: userInfo.name || userInfo.email.split('@')[0],
                     image: formatProfileImage(userInfo.picture),
                     emailVerified: userInfo.email_verified ?? false,
                     role: 'USER',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
                 },
             });
 
@@ -207,7 +213,7 @@ const upsertUser = async (userInfo: OAuthUserInfo) => {
     }
 };
 
-const createUserSession = async (userId: string, redirectTo: string, request: NextRequest) => {
+const createUserSession = async (userId: string, redirectTo: string) => {
     try {
         // Créer une nouvelle session dans la base de données
         const session = await prisma.session.create({
@@ -267,7 +273,7 @@ const handleOAuthError = (error: unknown, provider: Provider) => {
 };
 
 // Main handler
-export async function GET(request: NextRequest, {params}: { params: Promise<Params> }): Promise<NextResponse> {
+export async function GET(_request: NextRequest, {params}: { params: Promise<Params> }): Promise<NextResponse> {
     const {provider: providerParam} = await params;
     const provider = providerParam as Provider;
 
@@ -276,7 +282,7 @@ export async function GET(request: NextRequest, {params}: { params: Promise<Para
         getProviderConfig(provider);
 
         // Extract OAuth parameters
-        const oauthParams = getOAuthParams(request);
+        const oauthParams = getOAuthParams(_request);
 
         // Extract and await stored parameters
         const storedParams = await getStoredParams(provider);
@@ -295,7 +301,7 @@ export async function GET(request: NextRequest, {params}: { params: Promise<Para
         const userId = await upsertUser(userInfo);
 
         // Create session and cleanup
-        let response = await createUserSession(userId, validation.redirectTo, request);
+        let response = await createUserSession(userId, validation.redirectTo);
         response = cleanupOAuthCookies(response, provider);
 
         logger.info(`Connexion OAuth réussie pour l'utilisateur: ${userId}`);

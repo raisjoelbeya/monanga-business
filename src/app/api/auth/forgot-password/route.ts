@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 // Schéma de validation avec Zod
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Adresse email invalide'),
+  email: z.email('Adresse email invalide'),
 });
 
 export async function POST(req: Request) {
@@ -26,9 +26,11 @@ export async function POST(req: Request) {
 
     const { email } = validation.data;
 
-    // Vérifier si l'utilisateur existe
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+    // Vérifier si l'utilisateur existe par email
+    const user = await prisma.user.findFirst({
+      where: {
+        email: email.toLowerCase(),
+      },
     });
 
     if (!user) {

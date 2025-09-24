@@ -46,5 +46,5 @@ export const auth = {
     
   logout: () => apiRequest('/auth/logout', 'POST'),
   
-  getSession: () => apiRequest<{ user: { id: string; username: string } | null }>('/auth/me'),
+  getSession: () => apiRequest<{ user: { id: string; name?: string | null; email: string } | null }>('/auth/me'),
 };

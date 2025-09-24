@@ -1,23 +1,19 @@
 packages:
-  - 'packages/*'  # Si vous avez des packages dans un dossier packages/
-  - 'apps/*'      # Si vous avez des applications dans un dossier apps/
-  - '.'           # Le projet principal
+  - packages/*
+  - apps/*
+  - .
 
-# Configuration pour le hoisting des dépendances
+engines: {node: '>=18.0.0'}
+
 node-linker: hoisted
 
-# Dépendances qui doivent être construites
 onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
   - '@tailwindcss/oxide'
+  - '@vercel/speed-insights'
   - prisma
   - sharp
   - unrs-resolver
 
-# Configuration du moteur Node.js
-engines:
-  node: '>=18.0.0'
-
-# Configuration du registre npm
-registry: 'https://registry.npmjs.org/'
+registry: https://registry.npmjs.org/

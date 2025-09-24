@@ -12,28 +12,29 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  email     String?  // Ajout de l'email comme optionnel pour compatibilité
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  sessions  Session[]
-  
-  // Champs optionnels pour la compatibilité avec votre logique existante
-  name               String?
-  emailVerified      Boolean   @default(false) @map("email_verified")
-  image              String?
-  role               String    @default("USER")
-  
-  @@map("auth_user")
+  id                         String    @id @default(cuid())
+  name                       String?
+  email                      String    @unique
+  emailVerified              Boolean   @default(false)
+  emailVerificationToken     String?
+  emailVerificationExpires   DateTime?
+  password                   String?
+  image                      String?
+  resetToken                 String?
+  resetTokenExpiry           DateTime?
+  role                       String    @default("USER")
+  createdAt                  DateTime  @default(now()) @map("created_at")
+  updatedAt                  DateTime  @updatedAt @map("updated_at")
+  sessions                   Session[]
+
+  @@map("users")
 }
 
 model Session {
   id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
+  userId    String
+  expiresAt DateTime
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("user_session")
+
+  @@map("Session")
 }

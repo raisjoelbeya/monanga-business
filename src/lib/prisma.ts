@@ -11,9 +11,11 @@ const prismaClientSingleton = () => {
   }
 
   // Configuration minimale du client Prisma
-  return new PrismaClient({
+  const client = new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
   });
+
+  return client;
 };
 
 declare global {

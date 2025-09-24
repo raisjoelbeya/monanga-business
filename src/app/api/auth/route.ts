@@ -30,8 +30,6 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const providerId = searchParams.get('provider');
-    // Utilisation de la valeur de redirection si nécessaire plus tard
-    const _redirectTo = searchParams.get('redirect_to') || '/dashboard';
 
     if (!providerId) {
       return new NextResponse(
