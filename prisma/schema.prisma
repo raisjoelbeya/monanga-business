@@ -1,61 +1,37 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// Modèle utilisateur principal
 model User {
-  // Identifiants
-  id              String   @id @default(cuid())
-  email           String   @unique
-  username        String   @unique
-  
-  // Informations personnelles
-  firstName       String?
-  lastName        String?
-  image           String?  // URL de l'avatar
-  
-  // Authentification
-  password        String?  // Hash du mot de passe
-  emailVerified   Boolean  @default(false)
-  
-  // Récupération de mot de passe
-  resetToken      String?
-  resetTokenExpiry DateTime?
-  
-  // Rôle et permissions
-  role            String   @default("USER")  // USER, ADMIN, etc.
-  
-  // Métadonnées
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  
-  // Relations
-  sessions        Session[]
-  
+  id                       String    @id @default(cuid())
+  email                    String    @unique
+  firstName                String?
+  lastName                 String?
+  username                 String?   @unique
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  password                 String?
+  image                    String?
+  resetToken               String?
+  resetTokenExpiry         DateTime?
+  role                     String    @default("USER")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+  Session                  Session[]
+
   @@map("users")
 }
 
-// Session utilisateur
 model Session {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  expiresAt    DateTime @map("expires_at")
-  userAgent    String?  @map("user_agent")  // Navigateur et OS de l'utilisateur
-  ipAddress    String?  @map("ip_address")  // Adresse IP de l'utilisateur
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  @@map("sessions")
-  @@index([expiresAt], map: "idx_session_expires_at")
-  @@index([userId], map: "idx_session_user_id")
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  users     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -11,7 +11,11 @@ export default function AuthForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
-        fullName: '', email: '', password: '', confirmPassword: ''
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
     });
     const [termsAccepted, setTermsAccepted] = useState(false);
     const router = useRouter();
@@ -38,8 +42,8 @@ export default function AuthForm() {
         }
         // Validation pour l'inscription
         else {
-            if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
-                setError('Veuillez remplir tous les champs');
+            if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
+                setError('Veuillez remplir tous les champs obligatoires');
                 setLoading(false);
                 return;
             }
@@ -73,11 +77,16 @@ export default function AuthForm() {
                 }
             } else {
                 // Inscription
-                const response = await fetch('/api/auth/signup', {
-                    method: 'POST', headers: {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
                         'Content-Type': 'application/json',
-                    }, body: JSON.stringify({
-                        username: formData.email, password: formData.password, name: formData.fullName
+                    },
+                    body: JSON.stringify({
+                        email: formData.email,
+                        password: formData.password,
+                        firstName: formData.firstName,
+                        lastName: formData.lastName
                     })
                 });
 
@@ -132,21 +141,40 @@ export default function AuthForm() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
                 {/* Nom complet - Seulement pour l'inscription */}
-                {mode === 'signup' && (<div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-1">
-                        Nom complet
-                    </label>
-                    <input
-                        id="fullName"
-                        name="fullName"
+                {mode === 'signup' && (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
+                        Prénom *
+                      </label>
+                      <input
+                        id="firstName"
+                        name="firstName"
                         type="text"
                         required
                         className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                        placeholder="Votre nom complet"
-                        value={formData.fullName}
+                        placeholder="Votre prénom"
+                        value={formData.firstName}
                         onChange={handleChange}
-                    />
-                </div>)}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
+                        Nom *
+                      </label>
+                      <input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        required
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Votre nom"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Email - Toujours visible */}
                 <div>

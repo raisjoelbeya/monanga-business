@@ -20,6 +20,12 @@ export async function POST(req: Request) {
       where: { email: username },
       select: {
         id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        image: true,
+        role: true,
         password: true
       }
     });
@@ -43,10 +49,13 @@ export async function POST(req: Request) {
       sessionCookie.attributes
     );
 
+    // Exclure le mot de passe de la réponse
+    const { password: _, ...userWithoutPassword } = user;
+    
     return new Response(
       JSON.stringify({ 
         success: true,
-        userId: user.id
+        user: userWithoutPassword
       }),
       { status: 200 }
     );

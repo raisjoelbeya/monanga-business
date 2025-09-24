@@ -9,10 +9,14 @@ import { UserGreeting } from '../UserGreeting';
 
 interface User {
     id: string;
-    name?: string | null;
     email: string;
+    firstName: string | null;
+    lastName: string | null;
+    username: string | null;
     image?: string | null;
     role: string;
+    // Pour la rétrocompatibilité
+    name?: string | null;
 }
 
 export default function AdminNavbar() {
@@ -141,16 +145,25 @@ export default function AdminNavbar() {
                                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                             >
                                 <span className="sr-only">Ouvrir le menu utilisateur</span>
-                                {user.image ? (<Image
+                                {user.image ? (
+                                    <Image
                                         className="h-8 w-8 rounded-full"
                                         src={user.image}
-                                        alt={`${user.name || 'Utilisateur'}`}
+                                        alt={user.firstName && user.lastName 
+                                            ? `${user.firstName} ${user.lastName}` 
+                                            : user.username || 'Utilisateur'}
                                         width={32}
                                         height={32}
-                                    />) : (<div
-                                        className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                                        {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                                    </div>)}
+                                    />
+                                ) : (
+                                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                        {user.firstName 
+                                            ? user.firstName.charAt(0).toUpperCase() 
+                                            : user.username 
+                                                ? user.username.charAt(0).toUpperCase()
+                                                : user.email?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                )}
                             </button>
                         </div>
 

@@ -1,9 +1,10 @@
-import {cookies} from 'next/headers';
-import {OAuth2RequestError} from 'arctic';
-import {generateId} from 'lucia';
-import {NextRequest, NextResponse} from 'next/server';
-import {auth, facebook, google} from '@/lib/auth';
-import {generateUsername} from '@/lib/user-utils';
+import { cookies } from 'next/headers';
+import { OAuth2RequestError } from 'arctic';
+import { generateId } from 'lucia';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth, facebook, google } from '@/lib/auth';
+import { hash } from 'bcryptjs';
+import { ensureUsername, generateUsername } from '@/lib/user-utils';
 import prisma from '@/lib/prisma';
 import {logger} from '@/lib/logger';
 
@@ -159,7 +160,7 @@ const formatProfileImage = (picture?: OAuthUserInfo['picture']): string | null =
 
 const upsertUser = async (userInfo: OAuthUserInfo) => {
     try {
-        // Vérifier si l'utilisateur existe déjà par email ou username
+        // Vérifier si l'utilisateur existe déjà par email
         const existingUser = await prisma.user.findFirst({
             where: {
                 email: userInfo.email,
@@ -167,60 +168,83 @@ const upsertUser = async (userInfo: OAuthUserInfo) => {
         });
 
         let userId: string;
+        const now = new Date();
+
+        // Extraire le prénom et le nom à partir de userInfo.name
+        const nameParts = userInfo.name ? userInfo.name.split(' ').filter(Boolean) : [];
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
         if (existingUser) {
-            // Mettre à jour l'utilisateur existant si nécessaire
+            // Mettre à jour l'utilisateur existant
             userId = existingUser.id;
-            // Extraire le prénom et le nom à partir de userInfo.name s'il existe
-            const nameParts = userInfo.name ? userInfo.name.split(' ') : [];
-            const firstName = nameParts[0] || existingUser.firstName;
-            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : existingUser.lastName || '';
             
-            await prisma.user.update({
-                where: { id: userId }, 
-                data: {
-                    firstName,
-                    lastName,
-                    image: formatProfileImage(userInfo.picture) || existingUser.image,
-                    emailVerified: userInfo.email_verified ?? existingUser.emailVerified,
-                    updatedAt: new Date(),
-                },
-            });
-        } else {
-            // Créer un nouvel utilisateur avec Lucia
-            userId = generateId(15);
-            const password = generateId(32); // Generate a random password for OAuth users
+            // Préparer les données de mise à jour
+            const updateData: any = {
+                updatedAt: now,
+            };
 
-            // Extraire le prénom et le nom à partir de userInfo.name ou utiliser l'email comme prénom
-            const nameParts = userInfo.name ? userInfo.name.split(' ') : [userInfo.email.split('@')[0]];
-            const firstName = nameParts[0];
-            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+            // Mettre à jour le prénom et le nom s'ils ne sont pas déjà définis
+            if (!existingUser.firstName && firstName) {
+                updateData.firstName = firstName;
+            }
+            if (!existingUser.lastName && lastName) {
+                updateData.lastName = lastName;
+            }
+            
+            // Mettre à jour la photo de profil si elle n'est pas définie
+            const profileImage = formatProfileImage(userInfo.picture);
+            if (profileImage && !existingUser.image) {
+                updateData.image = profileImage;
+            }
+            
+            // Mettre à jour la vérification de l'email si nécessaire
+            if (userInfo.email_verified && !existingUser.emailVerified) {
+                updateData.emailVerified = true;
+            }
+            
+            // Si on a des données à mettre à jour, effectuer la mise à jour
+            if (Object.keys(updateData).length > 1) { // Plus que juste updatedAt
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: updateData,
+                });
+            }
+        } else {
+            // Créer un nouvel utilisateur
+            userId = generateId(15);
+            const hashedPassword = await hash(generateId(32), 10); // Hasher le mot de passe aléatoire
+            
+            // Générer un nom d'utilisateur unique
+            const username = await generateUsername(userInfo.email);
             
             await prisma.user.create({
                 data: {
                     id: userId,
-                    password: password, // Dans une application réelle, il faudrait hasher ce mot de passe
-                    email: userInfo.email,
-                    firstName,
-                    lastName,
-                    username: generateUsername(userInfo.email), // Générer un nom d'utilisateur unique
-                    image: formatProfileImage(userInfo.picture),
-                    emailVerified: userInfo.email_verified ?? false,
+                    email: userInfo.email.toLowerCase(),
+                    password: hashedPassword,
+                    firstName: firstName || null,
+                    lastName: lastName || null,
+                    username,
+                    image: formatProfileImage(userInfo.picture) || null,
+                    emailVerified: userInfo.email_verified,
                     role: 'USER',
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
                 },
             });
 
             // Créer une session pour l'utilisateur
             await prisma.session.create({
                 data: {
+                    id: generateId(40),
                     userId: userId,
                     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
                 },
             });
         }
 
+        // S'assurer que l'utilisateur a un nom d'utilisateur valide
+        await ensureUsername(userId);
+        
         return userId;
     } catch (error) {
         console.error('Erreur lors de la création/mise à jour de l\'utilisateur:', error);

@@ -11,8 +11,13 @@ import { UserGreeting } from '@/components/UserGreeting';
 type User = {
   id: string;
   email: string | null;
-  name?: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
   image?: string | null;
+  role?: string;
+  // Pour la rétrocompatibilité
+  name?: string | null;
 } | null;
 
 export default function Dashboard() {
@@ -96,7 +101,13 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
           <div className="flex items-center space-x-4">
-            <span className="text-gray-300">{user.name ? toTitleCase(user.name) : user.email}</span>
+            <span className="text-gray-300">
+              {user.firstName && user.lastName 
+                ? `${toTitleCase(user.firstName)} ${toTitleCase(user.lastName)}` 
+                : user.username 
+                  ? user.username 
+                  : user.email}
+            </span>
             <div className="flex items-center">
               {user?.image && (
                 <Image 
@@ -128,7 +139,11 @@ export default function Dashboard() {
             <div className="bg-gray-900 rounded-lg shadow-xl overflow-hidden">
               <div className="px-6 py-8">
                 <h2 className="text-2xl font-bold text-white mb-6">
-                  Bienvenue, {user.name ? toTitleCase(user.name) : 'Utilisateur'} !
+                  Bienvenue, {user.firstName && user.lastName 
+                    ? `${toTitleCase(user.firstName)} ${toTitleCase(user.lastName)}` 
+                    : user.username 
+                      ? user.username 
+                      : 'Utilisateur'} !
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -226,8 +241,16 @@ export default function Dashboard() {
                         <h4 className="text-lg font-medium text-white mb-4">Informations personnelles</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
+                            <p className="text-sm font-medium text-gray-400">Prénom</p>
+                            <p className="text-white">{user.firstName || 'Non défini'}</p>
+                          </div>
+                          <div>
                             <p className="text-sm font-medium text-gray-400">Nom</p>
-                            <p className="text-white">{user.name || 'Non défini'}</p>
+                            <p className="text-white">{user.lastName || 'Non défini'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-400">Nom d'utilisateur</p>
+                            <p className="text-white">{user.username || 'Non défini'}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-400">Email</p>

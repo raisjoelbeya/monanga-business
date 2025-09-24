@@ -12,8 +12,11 @@ export function useUser() {
       try {
         const response = await fetch('/api/auth/me');
         if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
+          const data = await response.json();
+          // La réponse de l'API est de la forme { user: ... }
+          if (data.user) {
+            setUser(data.user);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);
