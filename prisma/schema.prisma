@@ -14,29 +14,33 @@ datasource db {
 }
 
 model User {
-  id                         String    @id @default(cuid())
-  name                       String?
-  email                      String    @unique
-  emailVerified              Boolean   @default(false)
+  id            String    @id @default(cuid())
+  username      String?   @unique
+  email         String?   @unique
+  password      String?
+  name          String?
+  emailVerified Boolean   @default(false)
   emailVerificationToken     String?
   emailVerificationExpires   DateTime?
-  password                   String?
   image                      String?
   resetToken                 String?
   resetTokenExpiry           DateTime?
-  role                       String    @default("USER")
-  createdAt                  DateTime  @default(now()) @map("created_at")
-  updatedAt                  DateTime  @updatedAt @map("updated_at")
-  sessions                   Session[]
+  role          String    @default("USER")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  sessions      Session[]
 
-  @@map("users")
+  @@map("auth_user")
 }
 
 model Session {
   id        String   @id @default(cuid())
-  userId    String
-  expiresAt DateTime
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("Session")
+  @@map("user_session")
+  @@index([expiresAt], map: "idx_user_session_expires_at")
+  @@index([userId], map: "idx_user_session_user_id")
 }

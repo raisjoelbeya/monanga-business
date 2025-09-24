@@ -55,8 +55,16 @@ export async function POST(req: Request) {
       },
     });
 
+    // Vérifier que l'email n'est pas null
+    if (!user.email) {
+      return NextResponse.json(
+        { error: 'Aucune adresse email trouvée pour cet utilisateur' },
+        { status: 400 }
+      );
+    }
+
     // Envoyer l'email de réinitialisation
-    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+    const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
     
     await sendEmail({
       to: user.email,
