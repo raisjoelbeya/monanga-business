@@ -15,24 +15,26 @@ model User {
   id                 String    @id @default(cuid())
   name               String?
   email              String    @unique
-  emailVerified      Boolean   @default(false)
-  emailVerificationToken String?
-  emailVerificationExpires DateTime?
+  emailVerified      Boolean   @default(false) @map("email_verified")
+  emailVerificationToken String? @map("email_verification_token")
+  emailVerificationExpires DateTime? @map("email_verification_expires")
   password           String?
   image              String?
-  resetToken         String?
-  resetTokenExpiry   DateTime?
-  role               String    @default("USER") // ROLE: USER, ADMIN
+  resetToken         String?   @map("reset_token")
+  resetTokenExpiry   DateTime? @map("reset_token_expiry")
+  role               String    @default("USER")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
   sessions           Session[]
   
-  @@map("users")
+  @@map("auth_user")  // Ceci indique à Prisma le nom réel de la table
 }
 
 model Session {
   id        String   @id @default(cuid())
-  userId    String
-  expiresAt DateTime
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_session")  // Ceci indique à Prisma le nom réel de la table
 }
