@@ -12,22 +12,21 @@ datasource db {
 }
 
 model User {
-  id                 String    @id @default(cuid())
-  name               String?
-  email              String    @unique
-  emailVerified      Boolean   @default(false) @map("email_verified")
-  emailVerificationToken String? @map("email_verification_token")
-  emailVerificationExpires DateTime? @map("email_verification_expires")
-  password           String?
-  image              String?
-  resetToken         String?   @map("reset_token")
-  resetTokenExpiry   DateTime? @map("reset_token_expiry")
-  role               String    @default("USER")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-  sessions           Session[]
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  email     String?  // Ajout de l'email comme optionnel pour compatibilité
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  sessions  Session[]
   
-  @@map("auth_user")  // Ceci indique à Prisma le nom réel de la table
+  // Champs optionnels pour la compatibilité avec votre logique existante
+  name               String?
+  emailVerified      Boolean   @default(false) @map("email_verified")
+  image              String?
+  role               String    @default("USER")
+  
+  @@map("auth_user")
 }
 
 model Session {
@@ -36,5 +35,5 @@ model Session {
   expiresAt DateTime @map("expires_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  @@map("user_session")  // Ceci indique à Prisma le nom réel de la table
+  @@map("user_session")
 }
