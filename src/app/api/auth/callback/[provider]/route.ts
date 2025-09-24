@@ -180,7 +180,13 @@ const upsertUser = async (userInfo: OAuthUserInfo) => {
             userId = existingUser.id;
             
             // Préparer les données de mise à jour
-            const updateData: any = {
+            const updateData: {
+                updatedAt: Date;
+                firstName?: string;
+                lastName?: string;
+                image?: string;
+                emailVerified?: boolean;
+            } = {
                 updatedAt: now,
             };
 
@@ -257,6 +263,7 @@ const createUserSession = async (userId: string, redirectTo: string) => {
         // Créer une nouvelle session dans la base de données
         const session = await prisma.session.create({
             data: {
+                id: crypto.randomUUID(), // Générer un ID unique pour la session
                 userId: userId,
                 expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
             },

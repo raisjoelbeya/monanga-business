@@ -47,7 +47,7 @@ export function ChangePasswordForm() {
       } else {
         setMessage({ type: 'error', text: data.error || 'Une erreur est survenue' });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Erreur de connexion au serveur' });
     } finally {
       setIsLoading(false);

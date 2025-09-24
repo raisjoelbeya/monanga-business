@@ -249,7 +249,7 @@ export default function Dashboard() {
                             <p className="text-white">{user.lastName || 'Non défini'}</p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-400">Nom d'utilisateur</p>
+                            <p className="text-sm font-medium text-gray-400">Nom d&apos;utilisateur</p>
                             <p className="text-white">{user.username || 'Non défini'}</p>
                           </div>
                           <div>

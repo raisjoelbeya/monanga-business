@@ -21,7 +21,7 @@ export async function generateUsername(email: string): Promise<string> {
   
   let username = base;
   let suffix = 1;
-  let isUnique = false;
+  const isUnique = false;
   const maxAttempts = 10;
   
   // Essayer de trouver un nom d'utilisateur unique

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const userData = {
       id: userId,
       email: username,
-      username: generateUsername(username),
+      username: await generateUsername(username), // Attendre la résolution de la promesse
       password: hashedPassword,
       emailVerified: false,
       // Additional fields can be added here

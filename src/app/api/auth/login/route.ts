@@ -5,10 +5,10 @@ import { verifyPassword } from "@/lib/server/password";
 
 export async function POST(req: Request) {
   try {
-    const { username, password } = await req.json();
+    const { username, password: passwordInput } = await req.json();
 
     // Basic validation
-    if (!username || !password) {
+    if (!username || !passwordInput) {
       return new Response(
         JSON.stringify({ error: "Username and password are required" }),
         { status: 400 }
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     });
 
     // Verify user exists and password matches
-    if (!user || !(await verifyPassword(password, user.password || ''))) {
+    if (!user || !(await verifyPassword(passwordInput, user.password || ''))) {
       return new Response(
         JSON.stringify({ error: "Invalid username or password" }),
         { status: 401 }
@@ -50,7 +50,8 @@ export async function POST(req: Request) {
     );
 
     // Exclure le mot de passe de la réponse
-    const { password: _, ...userWithoutPassword } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = user;
     
     return new Response(
       JSON.stringify({ 
