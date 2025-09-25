@@ -23,7 +23,7 @@ services:
     image: ${PGADMIN_IMAGE:-dpage/pgadmin4}
     container_name: ${PGADMIN_CONTAINER_NAME:-pgadmin}
     env_file:
-      - .env
+      - .env.local
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@monanga.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}

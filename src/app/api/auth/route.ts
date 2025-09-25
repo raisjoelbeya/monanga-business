@@ -50,26 +50,38 @@ export async function GET(request: NextRequest) {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
     const sessionId = randomBytes(16).toString('hex');
-    const redirectTo = searchParams.get('redirectTo') || '/';
+    // Support both snake_case and camelCase for redirect param, default to dashboard
+    const redirectTo = searchParams.get('redirect_to') || searchParams.get('redirectTo') || '/dashboard';
     
     // Créer l'URL d'autorisation
     const authorizationUrl = new URL(provider.authorization.url);
     
+    // Construire la même base URL que celle utilisée par Arctic dans src/lib/auth.ts
+    const getAuthBaseUrl = () => {
+      if (process.env.NODE_ENV === 'production') {
+        return 'https://monanga-business.vercel.app';
+      }
+      return process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    };
+    const authBaseUrl = getAuthBaseUrl();
+
     // Ajouter les paramètres d'autorisation
     const params = new URLSearchParams({
       client_id: provider.clientId,
-      redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/${provider.id}`,
+      redirect_uri: `${authBaseUrl}/api/auth/callback/${provider.id}`,
       response_type: 'code',
-      scope: 'openid email profile',
       state,
       ...(provider.authorization.params || {}),
     });
     
+    const mask = (v?: string | null) => v ? `${v.slice(0,4)}...${v.slice(-4)}` : 'undefined';
     console.log('Provider ID:', provider.id);
-    console.log('Redirect URI:', `${process.env.NEXTAUTH_URL}/api/auth/callback/${provider.id}`);
+    console.log('Redirect URI:', `${authBaseUrl}/api/auth/callback/${provider.id}`);
+    console.log('Client ID (init)', mask(provider.clientId));
 
     // Ajouter le code_challenge si on utilise PKCE
-    if (provider.version === '2.0' && codeVerifier) {
+    // Facebook: ne pas utiliser PKCE pour rester cohérent avec l'échange côté callback
+    if (provider.version === '2.0' && codeVerifier && provider.id !== 'facebook') {
       const codeChallenge = await generateCodeChallenge(codeVerifier);
       params.set('code_challenge', codeChallenge);
       params.set('code_challenge_method', 'S256');

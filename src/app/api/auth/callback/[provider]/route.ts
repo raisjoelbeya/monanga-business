@@ -85,7 +85,8 @@ const validateOAuthParams = (provider: Provider, {code, state}: ReturnType<typeo
         return {valid: false, error: 'OAuthStateMismatch'};
     }
 
-    if (!code || !codeVerifier) {
+    // Pour Facebook, le code_verifier n'est pas requis (pas de PKCE sur l'échange)
+    if (!code || (!codeVerifier && provider !== 'facebook')) {
         logger.warn('Paramètres OAuth manquants', {provider, hasCode: !!code, hasCodeVerifier: !!codeVerifier});
         return {valid: false, error: 'OAuthStateMismatch'};
     }
@@ -112,6 +113,11 @@ const getProviderConfig = (provider: string): ProviderConfig => {
 
 const exchangeAuthorizationCode = async (provider: Provider, code: string, codeVerifier: string) => {
     const {instance} = getProviderConfig(provider);
+    // Facebook's OAuth flow with Arctic does not require PKCE on server-side token exchange.
+    // Some implementations fail if code_verifier is sent. We therefore omit it for Facebook.
+    if (provider === 'facebook') {
+        return await (instance as unknown as { validateAuthorizationCode: (code: string) => Promise<{ accessToken: string }> }).validateAuthorizationCode(code);
+    }
     return await instance.validateAuthorizationCode(code, codeVerifier);
 };
 
@@ -273,7 +279,12 @@ const createUserSession = async (userId: string, redirectTo: string) => {
         const sessionCookie = auth.createSessionCookie(session.id);
 
         // Créer la réponse de redirection
-        const response = NextResponse.redirect(redirectTo);
+        // Next.js requiert des URLs absolues pour les redirections
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const absoluteRedirect = redirectTo?.startsWith('http')
+            ? redirectTo
+            : new URL(redirectTo || '/', baseUrl).toString();
+        const response = NextResponse.redirect(absoluteRedirect);
 
         // Définir le cookie de session
         response.cookies.set({
@@ -310,11 +321,31 @@ const cleanupOAuthCookies = (response: NextResponse, provider: Provider) => {
 };
 
 const handleOAuthError = (error: unknown, provider: Provider) => {
-    const errorToLog = error instanceof Error ? error : new Error(String(error));
-    logger.error(`Erreur lors de la connexion OAuth pour le provider ${provider}`, errorToLog);
+    // Enrichir les logs pour diagnostiquer les erreurs côté provider/token
+    if (error instanceof OAuth2RequestError) {
+        try {
+            const anyErr = error as any;
+            // Respecter la signature logger.error(message, error?, meta?)
+            logger.error(`Erreur OAuth2RequestError pour ${provider}`, error, {
+                name: anyErr?.name,
+                message: anyErr?.message,
+                description: anyErr?.description,
+                cause: anyErr?.cause,
+                request: anyErr?.request,
+                response: {
+                    status: anyErr?.response?.status,
+                    body: anyErr?.response?.body,
+                },
+            });
+        } catch (e) {
+            logger.error(`Erreur lors de la journalisation OAuth pour ${provider}`, e as Error);
+        }
+    } else {
+        const errorToLog = error instanceof Error ? error : new Error(String(error));
+        logger.error(`Erreur lors de la connexion OAuth pour le provider ${provider}`, errorToLog);
+    }
 
     const errorCode = error instanceof OAuth2RequestError ? 'OAuthCallbackError' : 'OAuthError';
-
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=${errorCode}`);
 };
 
@@ -341,7 +372,12 @@ export async function GET(_request: NextRequest, {params}: { params: Promise<Par
         }
 
         // OAuth flow
-        const tokens = await exchangeAuthorizationCode(provider, oauthParams.code!, storedParams.codeVerifier!);
+        let tokens;
+        try {
+            tokens = await exchangeAuthorizationCode(provider, oauthParams.code!, storedParams.codeVerifier!);
+        } catch (e) {
+            return handleOAuthError(e, provider);
+        }
 
         const userInfo = await fetchUserInfo(provider, tokens.accessToken);
         const userId = await upsertUser(userInfo);

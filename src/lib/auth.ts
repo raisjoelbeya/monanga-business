@@ -2,6 +2,7 @@ import { Lucia } from "lucia";
 import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
 import { Google, Facebook } from "arctic";
 import prisma from "./prisma";
+import { logger } from "@/lib/logger";
 
 const adapter = new PrismaAdapter(prisma.session, prisma.user);
 
@@ -63,6 +64,22 @@ export const facebook = new Facebook(
 
 // Alias for backward compatibility
 export const facebookAuth = facebook;
+
+// Debug configuration in development
+if (process.env.NODE_ENV !== 'production') {
+    const mask = (v?: string | null) => v ? `${v.slice(0,4)}...${v.slice(-4)}` : 'undefined';
+    logger.debug('OAuth providers configured', {
+        baseUrl: authBaseUrl,
+        google: {
+            clientId: mask(process.env.GOOGLE_CLIENT_ID),
+            redirect: `${authBaseUrl}/api/auth/callback/google`,
+        },
+        facebook: {
+            clientId: mask(process.env.FACEBOOK_CLIENT_ID),
+            redirect: `${authBaseUrl}/api/auth/callback/facebook`,
+        },
+    });
+}
 
 // Typage Lucia
 declare module "lucia" {
