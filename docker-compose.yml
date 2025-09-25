@@ -3,7 +3,7 @@ services:
     image: ${POSTGRES_IMAGE:-postgres:15}
     container_name: ${POSTGRES_CONTAINER_NAME:-monanga-db}
     env_file:
-      - .env
+      - .env.local
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-monanga}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-monangapass}

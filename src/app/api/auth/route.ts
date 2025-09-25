@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
     const sessionId = randomBytes(16).toString('hex');
+    const redirectTo = searchParams.get('redirectTo') || '/';
     
     // Créer l'URL d'autorisation
     const authorizationUrl = new URL(provider.authorization.url);
@@ -86,16 +87,24 @@ export async function GET(request: NextRequest) {
       domain: process.env.NODE_ENV === 'production' ? `.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'monanga-business.vercel.app'}` : undefined
     } as const);
 
-    const stateCookie = {
-      name: 'state',
-      value: state,
-      options: createCookieOptions('/', 60 * 15) // 15 minutes
-    };
-
     const codeVerifierCookie = {
       name: 'code_verifier',
       value: codeVerifier,
       options: createCookieOptions('/api/auth/callback', 60 * 15) // 15 minutes
+    };
+
+    // Cookie combiné attendu par le callback: oauth_${provider}_state
+    const combinedStateCookie = {
+      name: `oauth_${provider.id}_state`,
+      value: JSON.stringify({ state, codeVerifier, redirectTo }),
+      options: createCookieOptions('/api/auth/callback', 60 * 15) // 15 minutes
+    };
+
+    // Cookie de redirection attendu par le callback en fallback
+    const redirectCookie = {
+      name: 'oauth_redirect_uri',
+      value: redirectTo,
+      options: createCookieOptions('/', 60 * 15)
     };
 
     const sessionCookie = {
@@ -105,8 +114,9 @@ export async function GET(request: NextRequest) {
     };
 
     // Définir les cookies
-    (await cookies()).set(stateCookie.name, stateCookie.value, stateCookie.options);
     (await cookies()).set(codeVerifierCookie.name, codeVerifierCookie.value, codeVerifierCookie.options);
+    (await cookies()).set(combinedStateCookie.name, combinedStateCookie.value, combinedStateCookie.options);
+    (await cookies()).set(redirectCookie.name, redirectCookie.value, redirectCookie.options);
     (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.options);
 
     // Stocker également l'état et le code_verifier dans une session côté serveur ou un cache
@@ -124,8 +134,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Préparer la réponse de redirection
+    const redirectResponse = NextResponse.redirect(authorizationUrl.toString());
+
+    // Définir les cookies sur la réponse de redirection (garantit l'envoi des Set-Cookie)
+    redirectResponse.cookies.set(codeVerifierCookie.name, codeVerifierCookie.value, codeVerifierCookie.options);
+    redirectResponse.cookies.set(combinedStateCookie.name, combinedStateCookie.value, combinedStateCookie.options);
+    redirectResponse.cookies.set(redirectCookie.name, redirectCookie.value, redirectCookie.options);
+    redirectResponse.cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.options);
+
     // Rediriger vers l'URL d'autorisation
-    return NextResponse.redirect(authorizationUrl.toString());
+    return redirectResponse;
   } catch (error) {
     console.error('Error in OAuth initiation:', error);
     return new NextResponse(
