@@ -35,11 +35,21 @@ export const auth = new Lucia(adapter, {
     },
 });
 
+// Configuration des URLs de callback en fonction de l'environnement
+const getAuthBaseUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://monanga-business.vercel.app';
+  }
+  return process.env.NEXTAUTH_URL || 'http://localhost:3000';
+};
+
+const authBaseUrl = getAuthBaseUrl();
+
 // Fournisseurs OAuth
 export const google = new Google(
     process.env.GOOGLE_CLIENT_ID!,
     process.env.GOOGLE_CLIENT_SECRET!,
-    `${process.env.NEXTAUTH_URL}/api/auth/callback/google`
+    `${authBaseUrl}/api/auth/callback/google`
 );
 
 // Alias for backward compatibility
@@ -48,7 +58,7 @@ export const googleAuth = google;
 export const facebook = new Facebook(
     process.env.FACEBOOK_CLIENT_ID!,
     process.env.FACEBOOK_CLIENT_SECRET!,
-    `${process.env.NEXTAUTH_URL}/api/auth/callback/facebook`
+    `${authBaseUrl}/api/auth/callback/facebook`
 );
 
 // Alias for backward compatibility
