@@ -21,14 +21,14 @@ jobs:
       postgres:
         image: ghcr.io/bitnami/postgresql:15
         env:
-          # Bitnami-required env vars (mapped from our global ones)
-          POSTGRESQL_USERNAME: ${{ env.POSTGRES_USER }}
-          POSTGRESQL_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-          POSTGRESQL_DATABASE: ${{ env.POSTGRES_DB }}
+          # Bitnami-required env vars (expressions are not supported here)
+          POSTGRESQL_USERNAME: test_user
+          POSTGRESQL_PASSWORD: test_password
+          POSTGRESQL_DATABASE: test_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -h 127.0.0.1
+          --health-cmd pg_isready -U test_user -d test_db -h 127.0.0.1
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
