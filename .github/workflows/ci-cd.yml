@@ -19,12 +19,12 @@ jobs:
 
     services:
       postgres:
-        image: ghcr.io/bitnami/postgresql:15
+        image: public.ecr.aws/docker/library/postgres:15
         env:
           # Bitnami-required env vars (expressions are not supported here)
-          POSTGRESQL_USERNAME: test_user
-          POSTGRESQL_PASSWORD: test_password
-          POSTGRESQL_DATABASE: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
         ports:
           - 5432:5432
         options: >-
