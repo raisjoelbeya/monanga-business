@@ -124,13 +124,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Prisma CLI
+        run: pnpm add -D @prisma/cli
+
       - name: Run database migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NODE_ENV: production
         run: |
           pnpm prisma generate
-          pnpm prisma migrate deploy
+          # Vérifier si c'est un déploiement initial
+          if ! pnpm prisma migrate status; then
+            echo "Initialisation de la base de données..."
+            pnpm prisma migrate dev --name init --skip-seed
+          else
+            echo "Application des migrations existantes..."
+            pnpm prisma migrate deploy
+          fi
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
