@@ -133,14 +133,8 @@ jobs:
           NODE_ENV: production
         run: |
           pnpm prisma generate
-          # Vérifier si c'est un déploiement initial
-          if ! pnpm prisma migrate status; then
-            echo "Initialisation de la base de données..."
-            pnpm prisma migrate dev --name init --skip-seed
-          else
-            echo "Application des migrations existantes..."
-            pnpm prisma migrate deploy
-          fi
+          echo "Application des migrations..."
+          pnpm prisma migrate deploy --schema=./prisma/schema.prisma
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
