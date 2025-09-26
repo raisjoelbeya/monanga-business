@@ -125,7 +125,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Prisma CLI
-        run: pnpm add -D @prisma/cli
+        run: pnpm add -Dw @prisma/cli
 
       - name: Run database migrations
         env:
