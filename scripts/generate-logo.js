@@ -1,6 +1,10 @@
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+import sharp from 'sharp';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import {logger} from "../src/lib/logger";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const svg = `
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
@@ -26,4 +30,4 @@ async function generateLogo() {
   }
 }
 
-generateLogo();
+generateLogo().then(() => logger.info('Logo généré avec succès!'));
