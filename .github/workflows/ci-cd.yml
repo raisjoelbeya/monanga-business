@@ -125,7 +125,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Prisma CLI
-        run: pnpm add -Dw @prisma/cli
+        run: pnpm add -Dw prisma
 
       - name: Run database migrations
         env:
@@ -136,7 +136,17 @@ jobs:
           echo "Synchronisation du schéma de la base de données..."
           pnpm prisma db push --accept-data-loss
 
+      - name: Debug Vercel secrets
+        run: |
+          echo "=== Debug Vercel Secrets ==="
+          echo "VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}"
+          echo "VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}"
+          echo "VERCEL_TOKEN length: ${#VERCEL_TOKEN}"
+          echo "VERCEL_TOKEN: ${VERCEL_TOKEN:0:4}...${VERCEL_TOKEN: -4}"  # Affiche les 4 premiers et 4 derniers caractères
+
       - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}

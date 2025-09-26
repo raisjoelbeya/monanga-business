@@ -100,7 +100,7 @@ importers:
         specifier: 15.5.3
         version: 15.5.3(eslint@9.36.0(jiti@2.6.0))(typescript@5.9.2)
       prisma:
-        specifier: ^5.16.1
+        specifier: ^5.22.0
         version: 5.22.0
       sharp:
         specifier: ^0.34.4
