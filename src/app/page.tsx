@@ -1,7 +1,6 @@
 import Link from "next/link";
 import NewsletterForm from "@/components/NewsletterForm";
 import { Logo } from "@/components/Logo";
-import Image from "next/image";
 
 // Composant réutilisable pour les cartes de fonctionnalités
 const FeatureCard = ({ title, description, icon }: { title: string; description: string; icon: React.ReactNode }) => (

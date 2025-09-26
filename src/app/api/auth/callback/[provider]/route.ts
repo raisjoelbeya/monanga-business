@@ -323,18 +323,25 @@ const cleanupOAuthCookies = (response: NextResponse, provider: Provider) => {
 const handleOAuthError = (error: unknown, provider: Provider) => {
     // Enrichir les logs pour diagnostiquer les erreurs côté provider/token
     if (error instanceof OAuth2RequestError) {
-        try {
-            const anyErr = error as any;
+      try {
+            const errObj = error as {
+                name?: string;
+                message?: string;
+                description?: string;
+                cause?: unknown;
+                request?: unknown;
+                response?: { status?: number; body?: unknown };
+            };
             // Respecter la signature logger.error(message, error?, meta?)
             logger.error(`Erreur OAuth2RequestError pour ${provider}`, error, {
-                name: anyErr?.name,
-                message: anyErr?.message,
-                description: anyErr?.description,
-                cause: anyErr?.cause,
-                request: anyErr?.request,
+                name: errObj?.name,
+                message: errObj?.message,
+                description: errObj?.description,
+                cause: errObj?.cause,
+                request: errObj?.request,
                 response: {
-                    status: anyErr?.response?.status,
-                    body: anyErr?.response?.body,
+                    status: errObj?.response?.status,
+                    body: errObj?.response?.body,
                 },
             });
         } catch (e) {
