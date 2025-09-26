@@ -61,7 +61,7 @@ jobs:
           echo "NextAuth URL set: ${{ secrets.NEXTAUTH_URL != '' }}"
           ls -la
           echo "Files in src/app/api/auth:"
-          ls -la src/app/api/auth/
+          ls -la src/app/api/auth/ || true
 
       - name: Install Dependencies
         run: |
