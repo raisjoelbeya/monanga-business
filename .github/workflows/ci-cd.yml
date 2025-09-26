@@ -133,8 +133,8 @@ jobs:
           NODE_ENV: production
         run: |
           pnpm prisma generate
-          echo "Application des migrations..."
-          pnpm prisma migrate deploy --schema=./prisma/schema.prisma
+          echo "Synchronisation du schéma de la base de données..."
+          pnpm prisma db push --accept-data-loss
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
