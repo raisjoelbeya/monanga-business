@@ -1,5 +1,3 @@
-import { env } from '@/env';
-
 // Niveaux de log
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
@@ -12,10 +10,10 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 };
 
 // Vérifier si on est en environnement de développement
-const isDev = env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development';
 
 // Niveau de log courant (par défaut: 'info' en production, 'debug' en développement)
-const currentLogLevel: LogLevel = (env.LOG_LEVEL as LogLevel) || (isDev ? 'debug' : 'info');
+const currentLogLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || (isDev ? 'debug' : 'info');
 
 // Fonction utilitaire pour formater les messages de log
 function formatMessage(level: LogLevel, message: string, meta?: Record<string, unknown>): string {

@@ -18,8 +18,18 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Récupérer l'ID de session depuis les cookies
-    const sessionId = request.cookies.get(auth.sessionCookieName)?.value;
+    // Vérifier que auth est correctement initialisé
+    if (!auth) {
+      console.error('Auth is not properly initialized');
+      return new NextResponse(
+        JSON.stringify({error: 'Erreur de configuration du serveur'}),
+        {status: 500, headers: {'Content-Type': 'application/json'}}
+      );
+    }
+
+    // Utiliser une valeur par défaut pour le nom du cookie
+    const cookieName = 'auth_session';
+    const sessionId = request.cookies.get(cookieName)?.value;
     
     if (!sessionId) {
       // Rediriger vers la page de connexion avec l'URL de redirection
@@ -28,13 +38,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Valider la session
-    const { session, user } = await auth.validateSession(sessionId);
+    // Valider la session avec un typage explicite
+    const result = await auth.validateSession(sessionId) as { 
+      session: { id: string } | null; 
+      user: { role: string; [key: string]: unknown } | null 
+    };
+    const { session, user } = result;
     
     if (!session || !user) {
       // Supprimer le cookie de session invalide
       const response = NextResponse.redirect(new URL('/login', request.url));
-      response.cookies.delete(auth.sessionCookieName);
+      response.cookies.delete(cookieName);
       return response;
     }
 

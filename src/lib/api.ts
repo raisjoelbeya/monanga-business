@@ -41,8 +41,19 @@ export const auth = {
   signup: (username: string, password: string) =>
     apiRequest<{ userId: string }>('/auth/signup', 'POST', { username, password }),
     
-  login: (username: string, password: string) =>
-    apiRequest<{ userId: string }>('/auth/login', 'POST', { username, password }),
+  login: (email: string, password: string) =>
+    apiRequest<{ 
+      userId: string;
+      user: {
+        id: string;
+        email: string;
+        firstName: string | null;
+        lastName: string | null;
+        username: string | null;
+        image: string | null;
+        role: string;
+      }
+    }>('/auth/login', 'POST', { username: email, password }),
     
   logout: () => apiRequest('/auth/logout', 'POST'),
   

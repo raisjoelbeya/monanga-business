@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminNavbar from '@/components/admin/AdminNavbar';
-import { auth } from '@/lib/auth';
 
 interface Stats {
   totalUsers: number;
@@ -21,21 +20,16 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Vérifier la session
-        const sessionId = document.cookie
-          .split('; ')
-          .find(row => row.startsWith(auth.sessionCookieName + '='))
-          ?.split('=')[1];
-
-        if (!sessionId) {
+        // Vérifier la session via l'API
+        const sessionResponse = await fetch('/api/auth/session');
+        if (!sessionResponse.ok) {
           router.push('/login');
           return;
         }
 
-        // Valider la session et vérifier le rôle
-        const { user } = await auth.validateSession(sessionId);
+        const sessionData = await sessionResponse.json();
         
-        if (!user || user.role !== 'ADMIN') {
+        if (sessionData.user?.role !== 'ADMIN') {
           router.push('/unauthorized');
           return;
         }
@@ -58,32 +52,32 @@ export default function AdminDashboard() {
       }
     };
 
-    fetchData();
+    fetchData().then(() => console.info('Data fetched successfully'));
   }, [router]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-900">
         <AdminNavbar />
         <div className="py-10">
           <main>
             <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
               <div className="px-4 py-8 sm:px-0">
                 <div className="animate-pulse space-y-4">
-                  <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-8 bg-gray-700 rounded w-1/3"></div>
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     {[...Array(4)].map((_, i) => (
-                      <div key={i} className="bg-white overflow-hidden shadow rounded-lg">
+                      <div key={i} className="bg-gray-800 overflow-hidden shadow rounded-lg">
                         <div className="px-4 py-5 sm:p-6">
-                          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-gray-700 rounded w-1/2 mb-4"></div>
+                          <div className="h-8 bg-gray-700 rounded w-3/4"></div>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="bg-white shadow rounded-lg p-6">
-                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
+                  <div className="bg-gray-800 shadow rounded-lg p-6">
+                    <div className="h-4 bg-gray-700 rounded w-1/4 mb-6"></div>
+                    <div className="h-64 bg-gray-700 rounded"></div>
                   </div>
                 </div>
               </div>
@@ -96,13 +90,13 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-900">
         <AdminNavbar />
         <div className="py-10">
           <main>
             <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
               <div className="px-4 py-8 sm:px-0">
-                <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                <div className="bg-red-900 bg-opacity-20 border-l-4 border-red-500 p-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -110,7 +104,7 @@ export default function AdminDashboard() {
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm text-red-700">{error}</p>
+                      <p className="text-sm text-red-300">{error}</p>
                     </div>
                   </div>
                 </div>
@@ -123,23 +117,23 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-900">
       <AdminNavbar />
       
-      <div className="py-10">
-        <header>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+      <div className="py-6 md:py-10 px-2 sm:px-4">
+        <header className="mb-6">
+          <div className="max-w-7xl mx-auto px-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Tableau de bord</h1>
           </div>
         </header>
         
         <main>
-          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div className="px-4 py-8 sm:px-0">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+            <div className="py-4 sm:py-6">
               {/* Cartes de statistiques */}
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Utilisateurs totaux */}
-                <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
@@ -149,9 +143,9 @@ export default function AdminDashboard() {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Utilisateurs totaux</dt>
+                          <dt className="text-sm font-medium text-gray-300 truncate">Utilisateurs totaux</dt>
                           <dd className="flex items-baseline">
-                            <div className="text-2xl font-semibold text-gray-900">
+                            <div className="text-2xl font-semibold text-white">
                               {stats?.totalUsers.toLocaleString()}
                             </div>
                           </dd>
@@ -162,7 +156,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Utilisateurs actifs */}
-                <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
@@ -172,9 +166,9 @@ export default function AdminDashboard() {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Utilisateurs actifs</dt>
+                          <dt className="text-sm font-medium text-gray-300 truncate">Utilisateurs actifs</dt>
                           <dd className="flex items-baseline">
-                            <div className="text-2xl font-semibold text-gray-900">
+                            <div className="text-2xl font-semibold text-white">
                               {stats?.activeUsers.toLocaleString()}
                             </div>
                             <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
@@ -192,7 +186,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Commandes totales */}
-                <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
@@ -202,9 +196,9 @@ export default function AdminDashboard() {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Commandes totales</dt>
+                          <dt className="text-sm font-medium text-gray-300 truncate">Commandes totales</dt>
                           <dd className="flex items-baseline">
-                            <div className="text-2xl font-semibold text-gray-900">
+                            <div className="text-2xl font-semibold text-white">
                               {stats?.totalOrders.toLocaleString()}
                             </div>
                           </dd>
@@ -215,7 +209,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Revenu total */}
-                <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
@@ -225,9 +219,9 @@ export default function AdminDashboard() {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Revenu total</dt>
+                          <dt className="text-sm font-medium text-gray-300 truncate">Revenu total</dt>
                           <dd className="flex items-baseline">
-                            <div className="text-2xl font-semibold text-gray-900">
+                            <div className="text-2xl font-semibold text-white">
                               {stats?.revenue.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                             </div>
                           </dd>
@@ -239,56 +233,56 @@ export default function AdminDashboard() {
               </div>
 
               {/* Graphique des ventes récentes */}
-              <div className="mt-8 bg-white shadow rounded-lg p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-6">Ventes récentes</h2>
-                <div className="h-64 flex items-center justify-center bg-gray-50 rounded-md">
-                  <p className="text-gray-500">Graphique des ventes récentes</p>
+              <div className="mt-6 sm:mt-8 bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+                <h2 className="text-lg font-medium text-white mb-4 sm:mb-6">Ventes récentes</h2>
+                <div className="h-56 sm:h-64 flex items-center justify-center bg-gray-700 rounded-md">
+                  <p className="text-sm sm:text-base text-gray-300 text-center px-4">Graphique des ventes récentes</p>
                 </div>
               </div>
 
               {/* Dernières commandes */}
-              <div className="mt-8">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Dernières commandes</h2>
-                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+              <div className="mt-6 sm:mt-8">
+                <h2 className="text-lg font-medium text-white mb-4">Dernières commandes</h2>
+                <div className="bg-gray-800 shadow overflow-x-auto rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-700">
+                    <thead className="bg-gray-700">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          N° de commande
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                          N° commande
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                           Client
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                           Statut
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
                           Montant
                         </th>
-                        <th scope="col" className="relative px-6 py-3">
+                        <th scope="col" className="relative px-4 py-3">
                           <span className="sr-only">Actions</span>
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-gray-800 divide-y divide-gray-700">
                       {[1, 2, 3, 4, 5].map((i) => (
-                        <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr key={i} className={i % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700'}>
+                          <td className="px-4 py-3 whitespace-nowrap text-xs sm:text-sm font-medium text-white">
                             #ORD-{1000 + i}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-4 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
                             Client {i}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-900 text-green-200">
                               Payé
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-4 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-300">
                             {(Math.random() * 1000).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="#" className="text-blue-600 hover:text-blue-900">Voir</a>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-xs sm:text-sm font-medium">
+                            <a href="#" className="text-blue-400 hover:text-blue-300">Voir</a>
                           </td>
                         </tr>
                       ))}

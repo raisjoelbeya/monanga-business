@@ -3,10 +3,33 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
+import type { Lucia } from 'lucia';
+
 // Lucia instance is already imported as auth
-const lucia = auth;
+const lucia = auth as Lucia<Record<string, unknown>> | undefined;
 
 export async function DELETE() {
+    if (!lucia) {
+        console.error('Lucia auth is not properly initialized');
+        return NextResponse.json(
+            { error: 'Erreur d\'authentification - Service non disponible' },
+            { status: 500 }
+        );
+    }
+
+    // Vérifier que lucia a bien les propriétés nécessaires
+    const isLuciaInstance = 'sessionCookieName' in lucia && 
+                          'validateSession' in lucia && 
+                          'invalidateUserSessions' in lucia &&
+                          'createBlankSessionCookie' in lucia;
+    
+    if (!isLuciaInstance) {
+        console.error('Lucia instance is not properly configured');
+        return NextResponse.json(
+            { error: 'Erreur d\'authentification - Configuration incorrecte' },
+            { status: 500 }
+        );
+    }
     try {
         // Récupérer la session via les cookies
         const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;

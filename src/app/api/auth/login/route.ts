@@ -38,16 +38,35 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create session
- // Create session
-    const session = await lucia.createSession(user.id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
-    
-    (await cookies()).set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes
-    );
+    // Vérifier que lucia est correctement initialisé et est une instance de Lucia
+    if (!lucia || !('createSession' in lucia)) {
+      console.error('Lucia is not properly initialized or not a valid Lucia instance');
+      return new Response(
+        JSON.stringify({ error: 'Authentication service unavailable' }),
+        { status: 500 }
+      );
+    }
+
+    try {
+      // Créer la session
+      const session = await lucia.createSession(user.id, {});
+      
+      // Créer le cookie de session
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      
+      // Définir le cookie
+      (await cookies()).set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes
+      );
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create session' }),
+        { status: 500 }
+      );
+    }
 
     // Exclure le mot de passe de la réponse
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

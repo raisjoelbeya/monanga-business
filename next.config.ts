@@ -18,6 +18,18 @@ const nextConfig: NextConfig = {
         // Désactive le cache du moteur Prisma
         disableOptimizedLoading: true
     },
+    // Configuration Webpack personnalisée
+    webpack: (config, { isServer, dev }) => {
+        // En développement, on active le rechargement automatique du middleware
+        if (dev && !isServer) {
+            config.watchOptions = {
+                ...config.watchOptions,
+                poll: 1000,
+                ignored: ['node_modules/**'],
+            };
+        }
+        return config;
+    },
 
     // Configuration des en-têtes de sécurité
     async headers() {
@@ -51,10 +63,6 @@ const nextConfig: NextConfig = {
         ],
     },
 
-    // Configuration Webpack personnalisée
-    webpack: (config) => {
-        return config;
-    },
 };
 
 export default nextConfig;

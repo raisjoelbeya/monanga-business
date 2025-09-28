@@ -5,6 +5,27 @@ import prisma from "@/lib/prisma";
 import { hashPassword } from "@/lib/server/password";
 import { generateUsername } from "@/lib/user-utils";
 
+// Définir une interface pour l'instance Lucia avec les méthodes nécessaires
+interface LuciaWithSession {
+  createSession: (userId: string, attributes: Record<string, unknown>) => Promise<{ id: string }>;
+  createSessionCookie: (sessionId: string) => { 
+    name: string; 
+    value: string; 
+    attributes: Record<string, unknown> 
+  };
+}
+
+// Vérifier si l'objet est une instance de Lucia avec les méthodes de session
+function isLuciaWithSession(obj: unknown): obj is LuciaWithSession {
+  if (!obj || typeof obj !== 'object') return false;
+  
+  const luciaObj = obj as Record<string, unknown>;
+  return (
+    typeof luciaObj.createSession === 'function' &&
+    typeof luciaObj.createSessionCookie === 'function'
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const { username, password } = await req.json();
@@ -83,9 +104,20 @@ export async function POST(req: Request) {
       throw error;
     }
 
+    // Vérifier que lucia est correctement initialisé avec les méthodes de session
+    if (!isLuciaWithSession(lucia)) {
+      console.error('Lucia is not properly initialized or missing session methods');
+      return new Response(
+        JSON.stringify({ error: 'Authentication service unavailable' }),
+        { status: 500 }
+      );
+    }
+
+    // Créer la session
     const session = await lucia.createSession(userId, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
     
+    // Définir le cookie de session
     (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,

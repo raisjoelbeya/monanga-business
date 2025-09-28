@@ -1,32 +1,21 @@
 import { PrismaClient } from '@prisma/client';
 
-// Ne pas initialiser Prisma dans le navigateur
-const isBrowser = typeof window !== 'undefined';
-
-const prismaClientSingleton = () => {
-  if (isBrowser) {
-    throw new Error(
-      '❌ PrismaClient is not available in the browser. Check your code to ensure it only runs on the server.'
-    );
-  }
-
-  // Configuration minimale du client Prisma
-  const client = new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
-  });
-
-  return client;
+// This prevents multiple instances of Prisma Client in development
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
 };
 
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
-}
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'error', 'warn']
+        : ['error'],
+  });
 
-export const prisma = globalThis.prisma ?? prismaClientSingleton();
-
-// Ne pas mettre en cache en production pour éviter les fuites de mémoire
 if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = prisma;
+  globalForPrisma.prisma = prisma;
 }
 
 export default prisma;

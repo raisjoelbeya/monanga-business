@@ -2,9 +2,42 @@ import { lucia } from "@/lib/lucia";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 
+// Définir une interface pour l'instance Lucia avec les méthodes nécessaires
+interface LuciaInstance {
+  validateSession: (sessionId: string) => Promise<{ user: { id: string } | null }>;
+  createBlankSessionCookie: () => { 
+    name: string; 
+    value: string; 
+    attributes: Record<string, unknown> 
+  };
+  sessionCookieName?: string;
+}
+
+// Vérifier si l'objet est une instance de Lucia valide
+function isLuciaInstance(obj: unknown): obj is LuciaInstance {
+  if (!obj || typeof obj !== 'object') return false;
+  
+  const luciaObj = obj as Record<string, unknown>;
+  return (
+    typeof luciaObj.validateSession === 'function' &&
+    typeof luciaObj.createBlankSessionCookie === 'function'
+  );
+}
+
 export async function GET() {
   try {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
+    // Vérifier que lucia est défini et est une instance de Lucia valide
+    if (!isLuciaInstance(lucia)) {
+      console.error('Lucia is not properly initialized or invalid');
+      return new Response(
+        JSON.stringify({ user: null }),
+        { status: 200 }
+      );
+    }
+
+    // Utiliser le nom du cookie de session de Lucia ou une valeur par défaut
+    const cookieName = lucia.sessionCookieName || 'auth_session';
+    const sessionId = (await cookies()).get(cookieName)?.value ?? null;
     
     if (!sessionId) {
       return new Response(
@@ -13,10 +46,18 @@ export async function GET() {
       );
     }
 
-    const { user: sessionUser } = await lucia.validateSession(sessionId);
+    if (!sessionId) {
+      return new Response(
+        JSON.stringify({ user: null }),
+        { status: 200 }
+      );
+    }
+
+    // Valider la session
+    const sessionValidation = await lucia.validateSession(sessionId);
     
-    if (!sessionUser) {
-      // Invalid session
+    if (!sessionValidation?.user) {
+      // Session invalide, créer un cookie vide
       const sessionCookie = lucia.createBlankSessionCookie();
       (await cookies()).set(
         sessionCookie.name,
@@ -29,6 +70,8 @@ export async function GET() {
         { status: 200 }
       );
     }
+    
+    const sessionUser = sessionValidation.user;
 
     // Récupérer les informations complètes de l'utilisateur depuis la base de données
     const user = await prisma.user.findUnique({

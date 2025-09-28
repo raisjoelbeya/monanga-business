@@ -5,7 +5,25 @@ import Link from 'next/link';
 import {auth} from '@/lib/auth';
 import {useEffect, useState} from 'react';
 import Image from 'next/image';
-import { UserGreeting } from '../UserGreeting';
+
+// Composant UserGreeting intégré directement
+const UserGreeting = ({ user, className = '' }: { 
+    user: User | null;
+    className?: string 
+}) => {
+    // Afficher le prénom, le nom d'utilisateur ou la première lettre de l'email
+    const getDisplayName = () => {
+        if (!user) return 'Utilisateur';
+        
+        if (user.firstName) return user.firstName;
+        if (user.username) return user.username;
+        if (user.email) return user.email.split('@')[0];
+        
+        return 'Utilisateur';
+    };
+    
+    return <span className={`font-semibold ${className}`}>{getDisplayName()}</span>;
+};
 
 interface User {
     id: string;
@@ -29,24 +47,31 @@ export default function AdminNavbar() {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const sessionId = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith(auth.sessionCookieName + '='))
-                    ?.split('=')[1];
-
-                if (!sessionId) {
-                    router.push('/login');
-                    return;
+                const response = await fetch('/api/auth/session');
+                
+                if (!response.ok) {
+                    throw new Error('Session invalide');
                 }
-
-                const {user} = await auth.validateSession(sessionId);
-
-                if (!user || user.role !== 'ADMIN') {
+                
+                const data = await response.json();
+                console.log('Données utilisateur reçues:', data);
+                
+                if (!data.user || data.user.role !== 'ADMIN') {
+                    console.error('Utilisateur non autorisé ou rôle invalide:', data.user);
                     router.push('/unauthorized');
                     return;
                 }
-
-                setUser(user);
+                
+                console.log('Définition des données utilisateur:', data.user);
+                setUser({
+                    id: data.user.id || '',
+                    email: data.user.email || '',
+                    firstName: data.user.firstName || data.user.name || null,
+                    lastName: data.user.lastName || null,
+                    username: data.user.username || null,
+                    image: data.user.image || null,
+                    role: data.user.role || 'USER'
+                });
             } catch (error) {
                 console.error('Erreur de vérification de session:', error);
                 router.push('/login');
@@ -60,17 +85,34 @@ export default function AdminNavbar() {
 
     const handleLogout = async () => {
         try {
+            // Vérifier que auth est correctement initialisé
+            if (!auth || typeof auth !== 'object') {
+                console.error('Auth is not properly initialized');
+                router.push('/login');
+                return;
+            }
+
+            // Utiliser le nom du cookie de session ou une valeur par défaut
+            const authObj = auth as Record<string, unknown>;
+            const cookieName = (authObj.sessionCookieName as string) || 'auth_session';
+            
+            // Récupérer l'ID de session depuis les cookies
             const sessionId = document.cookie
                 .split('; ')
-                .find(row => row.startsWith(auth.sessionCookieName + '='))
+                .find(row => row.startsWith(`${cookieName}=`))
                 ?.split('=')[1];
 
-            if (sessionId) {
-                await auth.invalidateSession(sessionId);
+            // Invalider la session si elle existe
+            if (sessionId && 'invalidateSession' in auth && typeof auth.invalidateSession === 'function') {
+                try {
+                    await auth.invalidateSession(sessionId);
+                } catch (error) {
+                    console.error('Error invalidating session:', error);
+                }
             }
 
             // Supprimer le cookie de session
-            document.cookie = `${auth.sessionCookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+            document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 
             router.push('/login');
         } catch (error) {
@@ -79,20 +121,20 @@ export default function AdminNavbar() {
     };
 
     if (isLoading) {
-        return (<nav className="bg-white shadow-sm">
+        return (<nav className="bg-gray-800 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex">
                             <div className="flex-shrink-0 flex items-center">
-                                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                                <div className="h-8 w-8 bg-gray-700 rounded animate-pulse"></div>
                             </div>
                             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                                 {[...Array(4)].map((_, i) => (
-                                    <div key={i} className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>))}
+                                    <div key={i} className="h-4 w-20 bg-gray-700 rounded animate-pulse"></div>))}
                             </div>
                         </div>
                         <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                            <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
+                            <div className="h-8 w-8 rounded-full bg-gray-700 animate-pulse"></div>
                         </div>
                     </div>
                 </div>
@@ -103,49 +145,48 @@ export default function AdminNavbar() {
         return null;
     }
 
-    return (<nav className="bg-white shadow-sm">
+    return (<nav className="bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
-                <div className="flex">
-                    <div className="flex-shrink-0 flex items-center">
+                <div className="flex items-center">
+                    <div className="flex-shrink-0">
                         <Link href="/admin">
-                            <span className="text-xl font-bold text-gray-900">Admin Panel</span>
+                            <span className="text-xl font-bold text-white">Admin Panel</span>
                         </Link>
                     </div>
                     <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                         <Link
-                            href="/admin/dashboard"
-                            className="border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                        >
-                            Tableau de bord
-                        </Link>
-                        <Link
                             href="/admin/users"
-                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            className="border-transparent text-gray-300 hover:border-gray-500 hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium font-semibold"
                         >
                             Utilisateurs
                         </Link>
                         <Link
                             href="/admin/settings"
-                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            className="border-transparent text-gray-300 hover:border-gray-500 hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium font-semibold"
                         >
                             Paramètres
                         </Link>
                     </div>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                    <div className="hidden sm:ml-6 sm:flex items-center text-sm text-gray-300">
+                        <UserGreeting user={user} className="ml-1 text-white font-semibold" />
+                    </div>
                     <div className="ml-3 relative">
                         <div>
                             <button
                                 type="button"
-                                className="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                className="bg-gray-800 rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                 id="user-menu"
                                 aria-expanded="false"
                                 aria-haspopup="true"
                                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                             >
                                 <span className="sr-only">Ouvrir le menu utilisateur</span>
-                                {user.image ? (
+                                {isLoading ? (
+                                    <div className="h-8 w-8 rounded-full bg-gray-700 animate-pulse"></div>
+                                ) : user?.image ? (
                                     <Image
                                         className="h-8 w-8 rounded-full"
                                         src={user.image}
@@ -156,40 +197,42 @@ export default function AdminNavbar() {
                                         height={32}
                                     />
                                 ) : (
-                                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                                        {user.firstName 
-                                            ? user.firstName.charAt(0).toUpperCase() 
-                                            : user.username 
-                                                ? user.username.charAt(0).toUpperCase()
-                                                : user.email?.charAt(0).toUpperCase() || 'U'}
+                                    <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-300">
+                                        {user?.firstName ?
+                                            user.firstName.charAt(0).toUpperCase()
+                                            : user?.username ?
+                                                user.username.charAt(0).toUpperCase()
+                                                : user?.email ?
+                                                    user.email.charAt(0).toUpperCase()
+                                                    : 'U'}
                                     </div>
                                 )}
                             </button>
                         </div>
 
                         {isProfileMenuOpen && (<div
-                                className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                                className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
                                 role="menu"
                                 aria-orientation="vertical"
                                 aria-labelledby="user-menu"
                             >
                                 <Link
                                     href="/admin/profile"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
                                     role="menuitem"
                                 >
                                     Votre profil
                                 </Link>
                                 <Link
                                     href="/admin/settings"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
                                     role="menuitem"
                                 >
                                     Paramètres
                                 </Link>
                                 <button
                                     onClick={handleLogout}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
                                     role="menuitem"
                                 >
                                     Déconnexion
@@ -200,7 +243,7 @@ export default function AdminNavbar() {
                 <div className="-mr-2 flex items-center sm:hidden">
                     <button
                         type="button"
-                        className="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         aria-controls="mobile-menu"
                         aria-expanded="false"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -234,29 +277,23 @@ export default function AdminNavbar() {
         </div>
 
         {/* Menu mobile */}
-        <div className={`${isMenuOpen ? 'block' : 'hidden'} sm:hidden`} id="mobile-menu">
+        <div className={`${isMenuOpen ? 'block' : 'hidden'} sm:hidden bg-gray-800`} id="mobile-menu">
         <div className="pt-2 pb-3 space-y-1">
           <Link
-            href="/admin/dashboard"
-            className="bg-blue-50 border-blue-500 text-blue-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
-          >
-            Tableau de bord
-          </Link>
-          <Link
             href="/admin/users"
-            className="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+            className="border-transparent text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
           >
             Utilisateurs
           </Link>
           <Link
             href="/admin/settings"
-            className="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+            className="border-transparent text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
           >
             Paramètres
           </Link>
         </div>
-        <div className="pt-4 pb-3 border-t border-gray-200">
-          <div className="flex items-center">
+        <div className="pt-4 pb-3 border-t border-gray-700">
+          <div className="flex items-center px-4">
             <div className="flex-shrink-0">
               {user.image ? (
                 <Image
@@ -267,9 +304,9 @@ export default function AdminNavbar() {
                   height={32}
                 />
               ) : (
-                <span className="inline-block h-8 w-8 rounded-full overflow-hidden bg-gray-100">
+                <span className="inline-block h-8 w-8 rounded-full overflow-hidden bg-gray-700">
                   <svg
-                    className="h-full w-full text-gray-300"
+                    className="h-full w-full text-gray-400"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -279,13 +316,10 @@ export default function AdminNavbar() {
               )}
             </div>
             <div className="ml-3">
-              <UserGreeting />
-            </div>
-            <div className="ml-3">
-              <div className="text-base font-medium text-gray-800">
-                {user.name || user.email}
+              <div className="text-base font-medium text-white">
+                {user.firstName} {user.lastName}
               </div>
-              <div className="text-sm font-medium text-gray-500">
+              <div className="text-sm font-medium text-gray-300">
                 {user.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}
               </div>
             </div>
@@ -293,19 +327,19 @@ export default function AdminNavbar() {
           <div className="mt-3 space-y-1">
             <Link
               href="/admin/profile"
-              className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              className="block px-4 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
             >
               Votre profil
             </Link>
             <Link
               href="/admin/settings"
-              className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              className="block px-4 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
             >
               Paramètres
             </Link>
             <button
               onClick={handleLogout}
-              className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
             >
               Déconnexion
             </button>

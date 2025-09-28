@@ -275,8 +275,23 @@ const createUserSession = async (userId: string, redirectTo: string) => {
             },
         });
 
+        // Vérifier que auth est correctement initialisé
+        if (!auth) {
+            logger.error('Auth is not properly initialized');
+            throw new Error('Service d\'authentification non disponible');
+        }
+        
         // Créer le cookie de session
-        const sessionCookie = auth.createSessionCookie(session.id);
+        interface AuthWithSessionCookie {
+            createSessionCookie: (sessionId: string) => { 
+                name: string; 
+                value: string; 
+                attributes: Record<string, unknown> 
+            };
+        }
+        
+        const lucia = auth as unknown as AuthWithSessionCookie;
+        const sessionCookie = lucia.createSessionCookie(session.id);
 
         // Créer la réponse de redirection
         // Next.js requiert des URLs absolues pour les redirections

@@ -3,23 +3,18 @@
 import {useUser} from "@/lib/hooks/use-user";
 
 interface UserGreetingProps {
-    className?: string;
-    showEmail?: boolean;
+    readonly className?: string;
 }
 
-export function UserGreeting({className = '', showEmail = false}: UserGreetingProps) {
+export function UserGreeting({className = ''}: Readonly<UserGreetingProps>) {
     const {user, isLoading} = useUser();
 
     if (isLoading || !user) {
-        return <span className={className}>Bonjour</span>;
+        return <span className={className}></span>;
     }
 
     // Utilisation de firstName, puis username, puis email comme fallback
-    const fullName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username;
-    const displayName = user.firstName || user.username || fullName || user.email?.split('@')[0] || 'Utilisateur';
+    const displayName = user.firstName || user.username || user.email?.split('@')[0] || '';
 
-    return (<div className={className}>
-            <span>Bonjour {displayName}</span>
-            {showEmail && user.email && (<span className="block text-sm text-gray-500">{user.email}</span>)}
-        </div>);
+    return <span className={className}>{displayName}</span>;
 }

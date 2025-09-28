@@ -71,9 +71,18 @@ export default function AuthForm() {
         try {
             if (mode === 'login') {
                 const {data, error} = await auth.login(formData.email, formData.password);
+                console.log('Login response:', { data, error }); // Log de débogage
                 if (error) throw new Error(error);
-                if (data?.userId) {
-                    router.push('/dashboard');
+                if (data?.user) {
+                    console.log('User role:', data.user.role); // Log du rôle
+                    // Rediriger vers /admin si l'utilisateur est un administrateur
+                    if (data.user.role === 'ADMIN') {
+                        console.log('Redirecting to /admin');
+                        router.push('/admin');
+                    } else {
+                        console.log('Redirecting to /dashboard');
+                        router.push('/dashboard');
+                    }
                     router.refresh();
                 }
             } else {
