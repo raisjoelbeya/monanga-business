@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {auth} from '@/lib/auth';
 import {useEffect, useState} from 'react';
 import Image from 'next/image';
+import {LogoutButton} from "@/components/LogoutButton";
 
 // Composant UserGreeting intégré directement
 const UserGreeting = ({ user, className = '' }: { 
@@ -171,74 +172,72 @@ export default function AdminNavbar() {
                     </div>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                    <div className="hidden sm:ml-6 sm:flex items-center text-sm text-gray-300">
-                        <UserGreeting user={user} className="ml-1 text-white font-semibold" />
-                    </div>
-                    <div className="ml-3 relative">
-                        <div>
-                            <button
-                                type="button"
-                                className="bg-gray-800 rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                id="user-menu"
-                                aria-expanded="false"
-                                aria-haspopup="true"
-                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                            >
-                                <span className="sr-only">Ouvrir le menu utilisateur</span>
-                                {isLoading ? (
-                                    <div className="h-8 w-8 rounded-full bg-gray-700 animate-pulse"></div>
-                                ) : user?.image ? (
-                                    <Image
-                                        className="h-8 w-8 rounded-full"
-                                        src={user.image}
-                                        alt={user.firstName && user.lastName 
-                                            ? `${user.firstName} ${user.lastName}` 
-                                            : user.username || 'Utilisateur'}
-                                        width={32}
-                                        height={32}
-                                    />
-                                ) : (
-                                    <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-300">
-                                        {user?.firstName ?
-                                            user.firstName.charAt(0).toUpperCase()
-                                            : user?.username ?
-                                                user.username.charAt(0).toUpperCase()
-                                                : user?.email ?
-                                                    user.email.charAt(0).toUpperCase()
-                                                    : 'U'}
+                    <div className="flex items-center space-x-3">
+                        <div className="text-sm text-gray-300">
+                            <UserGreeting user={user} className="text-white font-semibold" />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    className="bg-gray-800 rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    id="user-menu"
+                                    aria-expanded="false"
+                                    aria-haspopup="true"
+                                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                >
+                                    <span className="sr-only">Ouvrir le menu utilisateur</span>
+                                    {isLoading ? (
+                                        <div className="h-8 w-8 rounded-full bg-gray-700 animate-pulse"></div>
+                                    ) : user?.image ? (
+                                        <Image
+                                            className="h-8 w-8 rounded-full"
+                                            src={user.image}
+                                            alt={user.firstName && user.lastName 
+                                                ? `${user.firstName} ${user.lastName}` 
+                                                : user.username || 'Utilisateur'}
+                                            width={32}
+                                            height={32}
+                                        />
+                                    ) : (
+                                        <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-300">
+                                            {user?.firstName ?
+                                                user.firstName.charAt(0).toUpperCase()
+                                                : user?.username ?
+                                                    user.username.charAt(0).toUpperCase()
+                                                    : user?.email ?
+                                                        user.email.charAt(0).toUpperCase()
+                                                        : 'U'}
+                                        </div>
+                                    )}
+                                </button>
+
+                                {isProfileMenuOpen && (
+                                    <div
+                                        className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                                        role="menu"
+                                        aria-orientation="vertical"
+                                        aria-labelledby="user-menu"
+                                    >
+                                        <Link
+                                            href="/admin/profile"
+                                            className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
+                                            role="menuitem"
+                                        >
+                                            Votre profil
+                                        </Link>
+                                        <Link
+                                            href="/admin/settings"
+                                            className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
+                                            role="menuitem"
+                                        >
+                                            Paramètres
+                                        </Link>
                                     </div>
                                 )}
-                            </button>
+                            </div>
+                            <LogoutButton className="px-3 py-1.5 text-sm" />
                         </div>
-
-                        {isProfileMenuOpen && (<div
-                                className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
-                                role="menu"
-                                aria-orientation="vertical"
-                                aria-labelledby="user-menu"
-                            >
-                                <Link
-                                    href="/admin/profile"
-                                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
-                                    role="menuitem"
-                                >
-                                    Votre profil
-                                </Link>
-                                <Link
-                                    href="/admin/settings"
-                                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
-                                    role="menuitem"
-                                >
-                                    Paramètres
-                                </Link>
-                                <button
-                                    onClick={handleLogout}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-600"
-                                    role="menuitem"
-                                >
-                                    Déconnexion
-                                </button>
-                            </div>)}
                     </div>
                 </div>
                 <div className="-mr-2 flex items-center sm:hidden">

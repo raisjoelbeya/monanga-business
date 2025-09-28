@@ -11,6 +11,10 @@ export const lucia = {
     const auth = await getLucia();
     return auth.validateSession(sessionId);
   },
+  async invalidateSession(sessionId: string) {
+    const auth = await getLucia();
+    return auth.invalidateSession(sessionId);
+  },
   createBlankSessionCookie() {
     return {
       name: 'auth_session',

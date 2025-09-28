@@ -1,43 +1,14 @@
-import { lucia } from "@/lib/lucia";
+import { getLucia } from "@/lib/lucia";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-// Définir une interface pour l'instance Lucia avec les méthodes nécessaires
-interface LuciaInstance {
-  invalidateSession: (sessionId: string) => Promise<void>;
-  createBlankSessionCookie: () => { 
-    name: string; 
-    value: string; 
-    attributes: Record<string, unknown> 
-  };
-  sessionCookieName?: string;
-}
-
-// Vérifier si l'objet est une instance de Lucia valide
-function isLuciaInstance(obj: unknown): obj is LuciaInstance {
-  if (!obj || typeof obj !== 'object') return false;
-  
-  // Utiliser une assertion de type pour accéder aux propriétés en toute sécurité
-  const luciaObj = obj as Record<string, unknown>;
-  return (
-    typeof luciaObj.invalidateSession === 'function' &&
-    typeof luciaObj.createBlankSessionCookie === 'function'
-  );
-}
-
 export async function POST() {
   try {
-    // Vérifier que lucia est défini et est une instance de Lucia valide
-    if (!isLuciaInstance(lucia)) {
-      console.error('Lucia is not properly initialized or invalid');
-      return new NextResponse(
-        JSON.stringify({ error: 'Authentication service unavailable' }),
-        { status: 500 }
-      );
-    }
-
+    // Récupérer l'instance Lucia
+    const lucia = await getLucia();
+    
     // Utiliser le nom du cookie de session de Lucia ou une valeur par défaut
-    const cookieName = lucia.sessionCookieName || 'auth_session';
+    const cookieName = 'auth_session'; // Utiliser le nom du cookie directement
     const cookieStore = await cookies();
     const sessionId = cookieStore.get(cookieName)?.value ?? null;
     
@@ -48,11 +19,32 @@ export async function POST() {
       );
     }
 
-    // Invalider la session
-    await lucia.invalidateSession(sessionId);
+    try {
+      // Invalider la session
+      await lucia.invalidateSession(sessionId);
+    } catch (error) {
+      console.error('Error invalidating session:', error);
+      // Continuer même en cas d'erreur d'invalidation pour supprimer le cookie
+    }
     
     // Créer un cookie de session vide
-    const sessionCookie = lucia.createBlankSessionCookie();
+    const sessionCookie = {
+      name: cookieName,
+      value: '',
+      attributes: {
+        path: '/',
+        sameSite: 'lax' as const,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 0 // Expire immédiatement
+      }
+    };
+    
+    // Créer la chaîne d'attributs du cookie
+    const cookieAttributes = Object.entries(sessionCookie.attributes)
+      .filter(([_, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => value === true ? key : `${key}=${value}`)
+      .join('; ');
     
     // Créer la réponse avec le cookie de session vide
     const response = new NextResponse(
@@ -60,10 +52,7 @@ export async function POST() {
       { 
         status: 200,
         headers: {
-          'Set-Cookie': `${sessionCookie.name}=${sessionCookie.value}; ${Object.entries(sessionCookie.attributes)
-            .filter(entry => entry[1] !== undefined && entry[1] !== null)
-            .map(([key, value]) => value === true ? key : `${key}=${value}`)
-            .join('; ')}; Path=/; SameSite=lax; ${process.env.NODE_ENV === 'production' ? 'Secure; ' : ''}HttpOnly`
+          'Set-Cookie': `${sessionCookie.name}=${sessionCookie.value}; ${cookieAttributes}`
         }
       }
     );
@@ -73,7 +62,7 @@ export async function POST() {
     console.error('Logout error:', error);
     return new NextResponse(
       JSON.stringify({ error: 'Une erreur est survenue lors de la déconnexion' }),
-      { status: 500 }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
