@@ -2,7 +2,7 @@
 
 import {useState} from 'react';
 import {auth} from '@/lib/api';
-import {useRouter} from 'next/navigation';
+// L'import de useRouter a été supprimé car il n'est pas utilisé
 import { Logo } from '@/components/Logo';
 
 type AuthMode = 'login' | 'signup';
@@ -19,7 +19,7 @@ export default function AuthForm() {
         confirmPassword: ''
     });
     const [termsAccepted, setTermsAccepted] = useState(false);
-    const router = useRouter();
+    // La navigation est gérée via window.location
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const {name, value} = e.target;
@@ -71,19 +71,21 @@ export default function AuthForm() {
         try {
             if (mode === 'login') {
                 const {data, error} = await auth.login(formData.email, formData.password);
-                console.log('Login response:', { data, error }); // Log de débogage
+                console.log('Login response:', { data, error });
                 if (error) throw new Error(error);
+                
                 if (data?.user) {
-                    console.log('User role:', data.user.role); // Log du rôle
+                    console.log('User role:', data.user.role);
+                    
+                    // Rafraîchir la session côté client
+                    await fetch('/api/auth/session', { 
+                        credentials: 'include' 
+                    });
+                    
                     // Rediriger vers /admin si l'utilisateur est un administrateur
-                    if (data.user.role === 'ADMIN') {
-                        console.log('Redirecting to /admin');
-                        router.push('/admin');
-                    } else {
-                        console.log('Redirecting to /dashboard');
-                        router.push('/dashboard');
-                    }
-                    router.refresh();
+                    const redirectPath = data.user.role === 'ADMIN' ? '/admin' : '/dashboard';
+                    console.log('Redirecting to', redirectPath);
+                    window.location.href = redirectPath;
                 }
             } else {
                 // Inscription
@@ -101,21 +103,44 @@ export default function AuthForm() {
                 });
 
                 const data = await response.json();
+                console.log('Réponse inscription:', data);
 
                 if (!response.ok) {
                     throw new Error(data.error || 'Erreur lors de l\'inscription');
                 }
 
+                console.log('Tentative de connexion automatique...');
                 // Connexion automatique après inscription réussie
-                const {data: loginData, error: loginError} = await auth.login(formData.email, formData.password);
-                if (loginError) throw new Error(loginError);
+                const loginResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: formData.email,
+                        password: formData.password,
+                    }),
+                    credentials: 'include',
+                });
 
-                if (loginData?.userId) {
-                    router.push('/dashboard');
-                    router.refresh();
+                const loginData = await loginResponse.json();
+                console.log('Réponse connexion:', loginData);
+
+                if (!loginResponse.ok) {
+                    throw new Error(loginData.error || 'Échec de la connexion automatique');
                 }
+
+                // Rafraîchir la session côté client
+                await fetch('/api/auth/session', { 
+                    credentials: 'include' 
+                });
+
+                console.log('Redirection vers /dashboard');
+                // Forcer un rechargement complet pour s'assurer que les cookies sont bien pris en compte
+                window.location.href = '/dashboard';
             }
         } catch (err) {
+            console.error('Erreur lors de l\'authentification:', err);
             const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
             setError(errorMessage.includes('fetch') ? 'Erreur de connexion au serveur' : errorMessage);
         } finally {

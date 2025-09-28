@@ -139,8 +139,8 @@ export default function Home() {
         {/* Content */}
         <div className="relative max-w-4xl text-center z-10 p-4">
           <div className="flex flex-col items-center justify-center mb-6">
-            <div className="mb-4">
-              <Logo size="lg" withText={true} />
+            <div className="flex items-center justify-center mb-6">
+              <Logo size="xxl" withText={true} />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6">
               Votre Partenaire <br />

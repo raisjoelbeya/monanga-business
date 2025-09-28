@@ -1,7 +1,6 @@
-import { lucia } from "@/lib/lucia";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { verifyPassword } from "@/lib/server/password";
+import { getAuth } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -15,6 +14,8 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log('Tentative de connexion pour:', username);
+    
     // Get user from database
     const user = await prisma.user.findUnique({
       where: { email: username },
@@ -30,41 +31,26 @@ export async function POST(req: Request) {
       }
     });
 
-    // Verify user exists and password matches
-    if (!user || !(await verifyPassword(passwordInput, user.password || ''))) {
+    console.log('Utilisateur trouvé:', user ? 'Oui' : 'Non');
+    
+    // Verify user exists
+    if (!user) {
+      console.log('Aucun utilisateur trouvé avec cet email');
       return new Response(
-        JSON.stringify({ error: "Invalid username or password" }),
+        JSON.stringify({ error: "Identifiants invalides" }),
         { status: 401 }
       );
     }
-
-    // Vérifier que lucia est correctement initialisé et est une instance de Lucia
-    if (!lucia || !('createSession' in lucia)) {
-      console.error('Lucia is not properly initialized or not a valid Lucia instance');
+    
+    // Verify password
+    const isPasswordValid = await verifyPassword(passwordInput, user.password || '');
+    console.log('Mot de passe valide:', isPasswordValid);
+    
+    if (!isPasswordValid) {
+      console.log('Mot de passe incorrect pour l\'utilisateur:', user.email);
       return new Response(
-        JSON.stringify({ error: 'Authentication service unavailable' }),
-        { status: 500 }
-      );
-    }
-
-    try {
-      // Créer la session
-      const session = await lucia.createSession(user.id, {});
-      
-      // Créer le cookie de session
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      
-      // Définir le cookie
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes
-      );
-    } catch (error) {
-      console.error('Failed to create session:', error);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create session' }),
-        { status: 500 }
+        JSON.stringify({ error: "Invalid username or password" }),
+        { status: 401 }
       );
     }
 
@@ -72,13 +58,53 @@ export async function POST(req: Request) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
     
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        user: userWithoutPassword
-      }),
-      { status: 200 }
-    );
+    try {
+      // Get the auth instance
+      const auth = await getAuth();
+      
+      // Create session
+      const session = await auth.createSession(user.id, {});
+      
+      // Create session cookie
+      const sessionCookie = auth.createSessionCookie(session.id);
+      
+      // Format cookie header
+      const cookieAttributes = [
+        `Path=/`,
+        `SameSite=Lax`,
+        `HttpOnly`,
+        ...Object.entries(sessionCookie.attributes)
+          .filter(entry => entry[1] !== undefined && entry[1] !== null)
+          .map(([key, value]) => {
+            if (value === true) return key;
+            return `${key}=${value}`;
+          })
+      ].join('; ');
+      
+      // Create response with user data and cookie
+      const response = new Response(
+        JSON.stringify({ 
+          success: true,
+          user: userWithoutPassword
+        }),
+        { 
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Set-Cookie': `${sessionCookie.name}=${sessionCookie.value}; ${cookieAttributes}`
+          }
+        }
+      );
+      
+      console.log('Cookie de session défini:', sessionCookie.name, '=', sessionCookie.value.substring(0, 10) + '...');
+      return response;
+    } catch (authError) {
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Authentication service error' }),
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Login error:", error);
     return new Response(

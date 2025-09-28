@@ -7,6 +7,7 @@ import {toTitleCase} from '@/lib/utils/string';
 import Image from 'next/image';
 import {ChangePasswordForm} from '@/components/ChangePasswordForm';
 import {UserGreeting} from '@/components/UserGreeting';
+import { LogoutButton } from '@/components/LogoutButton';
 
 type User = {
     id: string;
@@ -46,24 +47,7 @@ export default function Dashboard() {
         checkAuth();
     }, [router]);
 
-    const handleLogout = async () => {
-        try {
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST', headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Échec de la déconnexion');
-            }
-
-            router.push('/login');
-            router.refresh(); // Rafraîchir la page pour mettre à jour l'état d'authentification
-        } catch (error) {
-            console.error('Erreur lors de la déconnexion:', error);
-        }
-    };
+    // La déconnexion est maintenant gérée par le composant LogoutButton
 
     if (loading) {
         return (<div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -74,19 +58,18 @@ export default function Dashboard() {
         </div>);
     }
 
-    if (!user) {
-        return (<div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-                <p className="text-red-500">Vous devez être connecté pour accéder à cette page.</p>
-                <button
-                    onClick={() => router.push('/login')}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    Se connecter
-                </button>
-            </div>
-        </div>);
-    }
+    // La redirection est gérée par le composant LogoutButton
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-center p-8 bg-gray-800 rounded-lg shadow-lg">
+          <p className="text-red-400 text-lg mb-6">Vous devez être connecté pour accéder à cette page.</p>
+          <LogoutButton />
+        </div>
+      </div>
+    );
+  }
 
     return (<div className="min-h-screen bg-black text-white">
         {/* En-tête */}
@@ -104,12 +87,9 @@ export default function Dashboard() {
                             height={40}
                         />)}
                     </div>
-                    <button
-                        onClick={handleLogout}
+                    <LogoutButton 
                         className="ml-4 px-4 py-2 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                    >
-                        Déconnexion
-                    </button>
+                    />
                 </div>
             </div>
         </header>
@@ -268,12 +248,7 @@ export default function Dashboard() {
                                                         passe</h5>
                                                     <ChangePasswordForm/>
                                                 </div>
-                                                <button
-                                                    onClick={handleLogout}
-                                                    className="w-full md:w-auto px-4 py-2 text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                                                >
-                                                    Se déconnecter
-                                                </button>
+                                                <LogoutButton />
                                             </div>
                                         </div>
 

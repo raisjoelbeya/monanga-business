@@ -126,10 +126,11 @@ export async function GET(request: NextRequest) {
     };
 
     // Définir les cookies
-    (await cookies()).set(codeVerifierCookie.name, codeVerifierCookie.value, codeVerifierCookie.options);
-    (await cookies()).set(combinedStateCookie.name, combinedStateCookie.value, combinedStateCookie.options);
-    (await cookies()).set(redirectCookie.name, redirectCookie.value, redirectCookie.options);
-    (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.options);
+    const cookieStore = await cookies();
+    cookieStore.set(codeVerifierCookie.name, codeVerifierCookie.value, codeVerifierCookie.options);
+    cookieStore.set(combinedStateCookie.name, combinedStateCookie.value, combinedStateCookie.options);
+    cookieStore.set(redirectCookie.name, redirectCookie.value, redirectCookie.options);
+    cookieStore.set(sessionCookie.name, sessionCookie.value, sessionCookie.options);
 
     // Stocker également l'état et le code_verifier dans une session côté serveur ou un cache
     if (RedisClient) {

@@ -38,7 +38,8 @@ export async function POST() {
 
     // Utiliser le nom du cookie de session de Lucia ou une valeur par défaut
     const cookieName = lucia.sessionCookieName || 'auth_session';
-    const sessionId = (await cookies()).get(cookieName)?.value ?? null;
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get(cookieName)?.value ?? null;
     
     if (!sessionId) {
       return new NextResponse(
@@ -53,18 +54,21 @@ export async function POST() {
     // Créer un cookie de session vide
     const sessionCookie = lucia.createBlankSessionCookie();
     
-    // Définir le cookie de session vide
-    (await cookies()).set(
-      sessionCookie.name, 
-      sessionCookie.value, 
-      sessionCookie.attributes
-    );
-
-    // Nous utilisons déjà cookies().set() plus haut, donc pas besoin de définir à nouveau le cookie ici
-    return new NextResponse(
+    // Créer la réponse avec le cookie de session vide
+    const response = new NextResponse(
       JSON.stringify({ success: true }),
-      { status: 200 }
+      { 
+        status: 200,
+        headers: {
+          'Set-Cookie': `${sessionCookie.name}=${sessionCookie.value}; ${Object.entries(sessionCookie.attributes)
+            .filter(entry => entry[1] !== undefined && entry[1] !== null)
+            .map(([key, value]) => value === true ? key : `${key}=${value}`)
+            .join('; ')}; Path=/; SameSite=lax; ${process.env.NODE_ENV === 'production' ? 'Secure; ' : ''}HttpOnly`
+        }
+      }
     );
+    
+    return response;
   } catch (error) {
     console.error('Logout error:', error);
     return new NextResponse(

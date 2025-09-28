@@ -48,21 +48,23 @@ export const getServerSession = async () => {
 
     // Utiliser le nom du cookie de session ou une valeur par défaut
     const cookieName = auth.sessionCookieName || 'auth_session';
-    const sessionId = (await cookies()).get(cookieName)?.value ?? null;
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get(cookieName)?.value ?? null;
     
     if (!sessionId) return { session: null, user: null };
 
     try {
         const { session, user } = await auth.validateSession(sessionId);
+        const updatedCookieStore = await cookies();
 
         if (session?.fresh) {
             const sessionCookie = auth.createSessionCookie(session.id);
-            (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+            updatedCookieStore.set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
         }
 
         if (!session) {
             const blankCookie = auth.createBlankSessionCookie();
-            (await cookies()).set(blankCookie.name, blankCookie.value, blankCookie.attributes);
+            updatedCookieStore.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
         }
 
         return { session, user };
@@ -83,31 +85,39 @@ export const requireAuth = async () => {
 
 // Déconnexion
 export const signOut = async () => {
-    // Vérifier que auth est correctement initialisé
     if (!isAuthInstance(auth)) {
         console.error('Auth is not properly initialized');
-        return;
+        return false;
     }
 
     try {
-        const { session } = await getServerSession();
+        // Récupérer l'ID de session
+        const cookieName = auth.sessionCookieName || 'auth_session';
+        const cookieStore = await cookies();
+        const sessionId = cookieStore.get(cookieName)?.value;
         
-        // Invalider la session si elle existe et si la méthode est disponible
-        if (session?.id && 'invalidateSession' in auth && typeof auth.invalidateSession === 'function') {
-            await auth.invalidateSession(session.id);
+        if (sessionId) {
+            // Invalider la session côté serveur
+            if (auth.invalidateSession) {
+                await auth.invalidateSession(sessionId);
+            }
         }
         
         // Créer et définir un cookie vide
         const blankCookie = auth.createBlankSessionCookie();
-        (await cookies()).set(blankCookie.name, blankCookie.value, blankCookie.attributes);
+        cookieStore.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
+        
+        return true;
     } catch (error) {
         console.error('Error during sign out:', error);
         // En cas d'erreur, essayer de supprimer le cookie quand même
         try {
-            const cookieName = auth.sessionCookieName || 'auth_session';
-            (await cookies()).delete(cookieName);
+            const cookieStore = await cookies();
+            const blankCookie = auth.createBlankSessionCookie();
+            cookieStore.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
         } catch (cookieError) {
             console.error('Error clearing session cookie:', cookieError);
         }
+        return false;
     }
 };

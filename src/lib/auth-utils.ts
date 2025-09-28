@@ -17,28 +17,38 @@ function isAuthInstance(obj: unknown): obj is AuthInstance {
 }
 
 export async function getSession() {
-  // Vérifier que auth est correctement initialisé
-  if (!isAuthInstance(auth)) {
-    console.error('Auth is not properly initialized');
-    return null;
-  }
-
-  // Utiliser le nom du cookie de session ou une valeur par défaut
-  const cookieName = auth.sessionCookieName || 'auth_session';
-  const sessionId = (await cookies()).get(cookieName)?.value ?? null;
-  
-  if (!sessionId) return null;
-  
   try {
-    const result = await auth.validateSession(sessionId);
-    if (!result?.session) return null;
+    // Vérifier que auth est correctement initialisé
+    if (!isAuthInstance(auth)) {
+      console.error('❌ Auth is not properly initialized');
+      return null;
+    }
+
+    // Utiliser le nom du cookie de session ou une valeur par défaut
+    const cookieName = auth.sessionCookieName || 'auth_session';
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get(cookieName)?.value ?? null;
     
+    if (!sessionId) {
+      console.log('🔍 No session ID found in cookies');
+      return null;
+    }
+    
+    console.log('🔑 Validating session...');
+    const result = await auth.validateSession(sessionId);
+    
+    if (!result?.session) {
+      console.log('❌ No valid session found');
+      return null;
+    }
+    
+    console.log('✅ Session validated successfully');
     return { 
       session: result.session, 
       user: result.user 
     };
   } catch (error) {
-    console.error('Error validating session:', error);
+    console.error('❌ Error validating session:', error);
     return null;
   }
 }

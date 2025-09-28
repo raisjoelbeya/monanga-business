@@ -32,7 +32,8 @@ export async function DELETE() {
     }
     try {
         // Récupérer la session via les cookies
-        const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
+        const cookieStore = await cookies();
+        const sessionId = cookieStore.get(lucia.sessionCookieName)?.value ?? null;
         
         if (!sessionId) {
             return NextResponse.json(

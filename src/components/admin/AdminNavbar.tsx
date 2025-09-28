@@ -92,9 +92,10 @@ export default function AdminNavbar() {
                 return;
             }
 
-            // Utiliser le nom du cookie de session ou une valeur par défaut
-            const authObj = auth as Record<string, unknown>;
-            const cookieName = (authObj.sessionCookieName as string) || 'auth_session';
+            // Use the session cookie name from auth object or fallback to default
+            const cookieName = 'session' in auth && auth.sessionCookieName 
+              ? auth.sessionCookieName 
+              : 'auth_session';
             
             // Récupérer l'ID de session depuis les cookies
             const sessionId = document.cookie

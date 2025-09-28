@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AuthButtons } from '@/components/AuthButtons';
+import {Logo} from "@/components/Logo";
 
 function RegisterContent() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ function RegisterContent() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registrationSuccess] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,27 +45,53 @@ function RegisterContent() {
     setLoading(true);
     
     try {
+      console.log('Début de l\'inscription pour:', formData.email);
+      
+      // Étape 1: Enregistrement de l'utilisateur
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim().toLowerCase(),
           password: formData.password,
         }),
       });
       
       const data = await response.json();
+      console.log('Réponse de l\'inscription:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Une erreur est survenue lors de l\'inscription');
       }
       
-      // Rediriger vers la page de connexion avec un message de succès
-      router.push(`/login?message=${encodeURIComponent('Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.')}`);
+      // Étape 2: Connexion automatique
+      console.log('Tentative de connexion automatique...');
+      const loginResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        }),
+        credentials: 'include', // Important pour les cookies
+      });
+
+      const loginData = await loginResponse.json();
+      console.log('Réponse de la connexion:', loginData);
+
+      if (!loginResponse.ok) {
+        throw new Error(loginData.error || 'Connexion automatique échouée');
+      }
+
+      console.log('Redirection vers /dashboard');
+      // Rediriger vers le tableau de bord
+      window.location.href = '/dashboard'; // Utiliser window.location pour forcer un rechargement complet
     } catch (err) {
       console.error('Erreur lors de l\'inscription:', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'inscription');
@@ -74,16 +102,16 @@ function RegisterContent() {
 
   const searchParams = useSearchParams();
   const message = searchParams?.get('message');
-  const success = searchParams?.get('success');
+  const successParam = searchParams?.get('success');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-              <span className="text-xl font-bold text-white">MB</span>
-            </div>
+              <div className="w-10 h-10 items-center justify-center mr-4">
+                  <Logo size="md" withText={false} />
+              </div>
             <h2 className="text-3xl font-extrabold text-white">
               Créer un compte
             </h2>
@@ -93,14 +121,19 @@ function RegisterContent() {
           </p>
         </div>
 
-        {error && (
+{registrationSuccess ? (
+          <div className="p-4 text-green-400 bg-green-900/30 border border-green-800 rounded-lg text-center">
+            <p className="font-medium">Compte créé avec succès !</p>
+            <p className="text-sm mt-1">Redirection vers la page de connexion...</p>
+          </div>
+        ) : error ? (
           <div className="p-4 text-red-400 bg-red-900/30 border border-red-800 rounded-lg">
             {error}
           </div>
-        )}
+        ) : null}
 
         {message && (
-          <div className={`p-4 ${success === 'true' ? 'text-green-400 bg-green-900/30 border-green-800' : 'text-red-400 bg-red-900/30 border-red-800'} border rounded-lg`}>
+          <div className={`p-4 ${successParam === 'true' ? 'text-green-400 bg-green-900/30 border-green-800' : 'text-red-400 bg-red-900/30 border-red-800'} border rounded-lg`}>
             {decodeURIComponent(message)}
           </div>
         )}
@@ -223,22 +256,27 @@ function RegisterContent() {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={loading}
-                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white ${
-                  loading 
-                    ? 'bg-blue-700 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300`}
+                disabled={loading || registrationSuccess}
+                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white ${registrationSuccess ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
               >
                 {loading ? (
-                  <span className="flex items-center">
+                  <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Création en cours...
-                  </span>
-                ) : 'Créer un compte'}
+                  </>
+                ) : registrationSuccess ? (
+                  <>
+                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Compte créé !
+                  </>
+                ) : (
+                  'Créer un compte'
+                )}
               </button>
             </div>
           </form>
@@ -259,16 +297,17 @@ function RegisterContent() {
               <AuthButtons title="" className="max-w-none" />
             </div>
           </div>
+
+            <div className="mt-8 text-center">
+                <button
+                    onClick={() => router.push('/')}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                    ← Retour à l&apos;accueil
+                </button>
+            </div>
         </div>
 
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => router.push('/')}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            ← Retour à l&apos;accueil
-          </button>
-        </div>
       </div>
     </div>
   );

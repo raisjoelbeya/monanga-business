@@ -1,15 +1,30 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AuthButtons } from '@/components/AuthButtons';
 import Link from 'next/link';
+import { Logo } from "@/components/Logo";
 
 function LoginContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const message = searchParams.get('message');
   const error = searchParams.get('error');
+  const logout = searchParams.get('logout');
+  
+  // Effet pour gérer la déconnexion
+  useEffect(() => {
+    if (logout === 'true') {
+      // Supprimer le paramètre d'URL après le traitement
+      const url = new URL(window.location.href);
+      url.searchParams.delete('logout');
+      window.history.replaceState({}, '', url.toString());
+      
+      // Rafraîchir la page pour s'assurer que tout est réinitialisé
+      window.location.reload();
+    }
+  }, [logout]);
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
@@ -17,14 +32,14 @@ function LoginContent() {
         {/* Logo et titre */}
         
         <div className="text-center mb-10">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-              <span className="text-2xl font-bold text-white">MB</span>
+            <div className="flex items-center justify-center mb-4">
+                <div className="w-10 h-10 items-center justify-center mr-4">
+                    <Logo size="md" withText={false} />
+                </div>
+                <h2 className="text-3xl font-extrabold text-white">
+                    Connexion
+                </h2>
             </div>
-            <h1 className="text-4xl font-bold text-white">
-              Monanga Business
-            </h1>
-          </div>
           <p className="text-gray-400 mt-2">
             Connectez-vous pour accéder à votre espace personnel
           </p>
@@ -66,7 +81,43 @@ function LoginContent() {
             </div>
           )}
 
-          <form className="space-y-6" action="/api/auth/login" method="POST">
+          <form 
+            className="space-y-6" 
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const email = formData.get('email') as string;
+              const password = formData.get('password') as string;
+              
+              try {
+                const response = await fetch('/api/auth/login', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    username: email,
+                    password: password,
+                  }),
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                  // Handle error
+                  const error = data.error || 'Failed to log in';
+                  window.location.href = `/login?error=${encodeURIComponent(error)}`;
+                  return;
+                }
+                
+                // Redirect to dashboard or home page on success
+                window.location.href = '/';
+              } catch (err) {
+                console.error('Login error:', err);
+                window.location.href = `/login?error=${encodeURIComponent('Failed to connect to server')}`;
+              }
+            }}
+          >
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                 Adresse email

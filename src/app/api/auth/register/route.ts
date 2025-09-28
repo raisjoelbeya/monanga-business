@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcryptjs';
 import { z } from 'zod';
+import { hashPassword } from '@/lib/server/password';
 
 const prisma = new PrismaClient();
 
@@ -40,8 +40,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hacher le mot de passe
-    const hashedPassword = await hash(password, 12);
+    // Hash the password using our custom hashing function
+    const hashedPassword = await hashPassword(password);
 
     // Créer l'utilisateur
     const user = await prisma.user.create({
