@@ -16,16 +16,23 @@ export function LogoutButton({ className = '' }: Readonly<LogoutButtonProps>) {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important pour les cookies
       });
 
+      const data = await response.json();
+      
       if (response.ok) {
-        // Rediriger vers la page de connexion avec le paramètre logout=true
+        // Forcer un rechargement complet pour s'assurer que tous les états sont réinitialisés
         window.location.href = '/';
       } else {
-        console.error('Échec de la déconnexion');
+        const errorMessage = data?.error || 'Erreur inconnue';
+        console.error('Échec de la déconnexion:', errorMessage);
+        alert(`Impossible de se déconnecter: ${errorMessage}`);
       }
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      console.error('Erreur lors de la déconnexion:', errorMessage);
+      alert(`Une erreur est survenue lors de la déconnexion: ${errorMessage}`);
     }
   };
 

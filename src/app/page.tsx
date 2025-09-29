@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import NewsletterForm from "@/components/NewsletterForm";
 import { Logo } from "@/components/Logo";
 

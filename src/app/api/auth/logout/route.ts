@@ -7,44 +7,33 @@ export async function POST() {
     // Récupérer l'instance Lucia
     const lucia = await getLucia();
     
-    // Utiliser le nom du cookie de session de Lucia ou une valeur par défaut
-    const cookieName = 'auth_session'; // Utiliser le nom du cookie directement
+    // Utiliser le nom du cookie de session de Lucia
+    const cookieName = lucia.sessionCookieName || 'auth_session';
     const cookieStore = await cookies();
     const sessionId = cookieStore.get(cookieName)?.value ?? null;
     
-    if (!sessionId) {
-      return new NextResponse(
-        JSON.stringify({ error: "Aucune session active" }),
-        { status: 401 }
-      );
-    }
-
-    try {
-      // Invalider la session
-      await lucia.invalidateSession(sessionId);
-    } catch (error) {
-      console.error('Error invalidating session:', error);
-      // Continuer même en cas d'erreur d'invalidation pour supprimer le cookie
-    }
-    
-    // Créer un cookie de session vide
-    const sessionCookie = {
-      name: cookieName,
-      value: '',
-      attributes: {
-        path: '/',
-        sameSite: 'lax' as const,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 0 // Expire immédiatement
+    // Invalider la session si elle existe
+    if (sessionId) {
+      try {
+        await lucia.invalidateSession(sessionId);
+      } catch (error) {
+        console.error('Error invalidating session:', error);
+        // On continue même en cas d'erreur pour supprimer le cookie
       }
-    };
+    }
     
-    // Créer la chaîne d'attributs du cookie
-    const cookieAttributes = Object.entries(sessionCookie.attributes)
-      .filter(([, value]) => value !== undefined && value !== null)
-      .map(([key, value]) => value === true ? key : `${key}=${value}`)
-      .join('; ');
+    // Créer un cookie de session vide qui expire immédiatement
+    const sessionCookie = lucia.createBlankSessionCookie();
+    
+    // S'assurer que le cookie expire immédiatement
+    const cookieAttributes = [
+      `Path=${sessionCookie.attributes.path}`,
+      `SameSite=${sessionCookie.attributes.sameSite}`,
+      `HttpOnly`,
+      sessionCookie.attributes.secure ? 'Secure' : '',
+      'Max-Age=0',
+      'Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    ].filter(Boolean).join('; ');
     
     // Créer la réponse avec le cookie de session vide
     return new NextResponse(
@@ -52,15 +41,25 @@ export async function POST() {
       { 
         status: 200,
         headers: {
-          'Set-Cookie': `${sessionCookie.name}=${sessionCookie.value}; ${cookieAttributes}`
+          'Set-Cookie': `${sessionCookie.name}=; ${cookieAttributes}`,
+          'Content-Type': 'application/json'
         }
       }
     );
   } catch (error) {
-    console.error('Logout error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    console.error('Logout error:', errorMessage);
     return new NextResponse(
-      JSON.stringify({ error: 'Une erreur est survenue lors de la déconnexion' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: 'Une erreur est survenue lors de la déconnexion',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      }),
+      { 
+        status: 500, 
+        headers: { 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
   }
 }
