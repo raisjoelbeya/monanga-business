@@ -9,9 +9,6 @@ export const config = {
 	matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico|images).*)',],
 };
 
-// Désactiver le cache pour le middleware
-export const dynamic = 'force-dynamic';
-
 // Chemins publics qui ne nécessitent pas d'authentification
 const PUBLIC_PATHS = [
 	'/',

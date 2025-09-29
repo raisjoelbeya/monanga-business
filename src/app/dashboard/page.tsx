@@ -34,6 +34,12 @@ export default function Dashboard() {
 					router.push('/login');
 					return;
 				}
+
+				// Rediriger les administrateurs vers /admin
+				if (currentUser.role === 'ADMIN') {
+					router.push('/admin');
+					return;
+				}
 				
 				setUser(currentUser);
 			} catch (error) {
