@@ -3,101 +3,70 @@ import Link from 'next/link';
 import React from 'react';
 
 interface LogoProps {
-    className?: string;
-    size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl';
-    withText?: boolean;
-    fontSize?: string;
-    fontWeight?: number;
-    lineHeight?: string;
-    gapScale?: number;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl';
+  withText?: boolean;
 }
 
 export const Logo = ({
-                         className = '',
-                         size = 'md',
-                         withText = true,
-                         fontSize: customFontSize,
-                         fontWeight: customFontWeight,
-                         lineHeight: customLineHeight,
-                         gapScale = 0.25,
-                     }: LogoProps) => {
-    // Source de vérité (rem au lieu de px → responsive)
-    const sizeMap = {
-        sm: 1.5,   // 24px
-        md: 2.5,   // 40px
-        lg: 4,     // 64px
-        xl: 5,     // 80px
-        xxl: 6.25, // 100px
-        xxxl: 7.5, // 120px
-    };
+  className = '',
+  size = 'md',
+  withText = true,
+}: LogoProps) => {
+  // --- Mappings from size prop to RESPONSIVE Tailwind classes ---
+	
+	const logoSizeClasses = {
+		sm: 'w-3 h-3',
+		md: 'w-5 h-5 sm:w-6 sm:h-6',
+		lg: 'w-7 h-7 sm:w-11 sm:h-11',
+		xl: 'w-9 h-9 sm:w-13 sm:h-13',
+		xxl: 'w-11 h-11 sm:w-17 sm:h-17',
+		xxxl: 'w-13 h-13 sm:w-21 sm:h-21',
+	};
+	
+	const textSizeClasses = {
+		sm: 'text-lg font-extrabold',
+		md: 'text-xl sm:text-2xl font-extrabold',
+		lg: 'text-2xl sm:text-4xl font-extrabold',
+		xl: 'text-3xl sm:text-5xl font-extrabold',
+		xxl: 'text-4xl sm:text-6xl font-extrabold',
+		xxxl: 'text-5xl sm:text-7xl font-extrabold',
+	};
 
-    const logoSize = sizeMap[size] || sizeMap.md; // en rem
+  const gapClasses = {
+    sm: 'ml-2',
+    md: 'ml-3',
+    lg: 'ml-3 sm:ml-4',
+    xl: 'ml-4',
+    xxl: 'ml-4 sm:ml-5',
+    xxxl: 'ml-5 sm:ml-6',
+  };
 
-    // ✅ Font size proportionnelle au logo
-    const defaultFontSize = `${(logoSize * 0.75).toFixed(2)}rem`;
+  // --- Select the correct classes based on the size prop ---
 
-    // ✅ Font weight : lié à la taille du logo, borné entre 500–900
-    const defaultFontWeight = Math.max(500, Math.min(900, Math.round(logoSize * 500)));
+  const finalLogoClasses = logoSizeClasses[size] || logoSizeClasses.md;
+  const finalTextClasses = textSizeClasses[size] || textSizeClasses.md;
+  const finalGapClasses = gapClasses[size] || gapClasses.md;
 
-    // ✅ Line height : lié à la taille mais limité (1.2 → 2 max)
-    const defaultLineHeight = (1.2 + logoSize / 10).toFixed(2);
-
-    // ✅ Gap proportionnel au logo
-    const gap = `${(logoSize * gapScale).toFixed(2)}rem`;
-
-    // Overrides si props fournies
-    const fontSize = customFontSize || defaultFontSize;
-    const fontWeight = customFontWeight ?? defaultFontWeight;
-    const lineHeight = customLineHeight || defaultLineHeight;
-
-    return (
-        <Link
-            href="/"
-            className={`flex items-center ${className} hover:opacity-90 transition-opacity`}
-        >
-            <div 
-                className="relative flex-shrink-0"
-                style={{
-                    width: `${logoSize}rem`,
-                    height: `${logoSize}rem`,
-                    minWidth: `${logoSize}rem`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-            >
-                <div 
-                    style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    <Image
-                        src="/logo.svg"
-                        alt="Monanga Business Logo"
-                        width={logoSize * 16} // Conversion rem en px (1rem = 16px)
-                        height={logoSize * 16}
-                        className="max-w-full max-h-full w-auto h-auto"
-                        priority
-                        style={{
-                            objectFit: 'contain',
-                            display: 'block'
-                        }}
-                    />
-                </div>
-            </div>
-            {withText && (
-                <span
-                    className="text-white whitespace-nowrap"
-                    style={{ fontSize, fontWeight, lineHeight, marginLeft: gap }}
-                >
+  return (
+    <Link
+      href="/"
+      className={`flex items-center hover:opacity-90 transition-opacity ${className}`}
+    >
+      <div className={`relative flex-shrink-0 ${finalLogoClasses}`}>
+        <Image
+          src="/logo.svg"
+          alt="Monanga Business Logo"
+          fill
+          priority
+          className="object-contain"
+        />
+      </div>
+      {withText && (
+        <span className={`text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 whitespace-nowrap font-bold ${finalTextClasses} ${finalGapClasses}`}>
           Monanga Business
         </span>
-            )}
-        </Link>
-    );
+      )}
+    </Link>
+  );
 };

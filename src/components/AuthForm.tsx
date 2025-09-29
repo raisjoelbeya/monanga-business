@@ -158,8 +158,8 @@ export default function AuthForm() {
       <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
         <div className="text-center">
           <div className="flex flex-col items-center justify-center mb-6">
-            <div className="mb-4">
-              <Logo size="md" withText={false} />
+            <div className="mb-5">
+              <Logo size="lg" withText={false} />
             </div>
             <h2 className="text-3xl font-extrabold text-white">
               {mode === 'login' ? 'Connexion' : 'Inscription'}

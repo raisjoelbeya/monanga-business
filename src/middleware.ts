@@ -40,6 +40,14 @@ const PROTECTED_API_PATHS = [
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Based on your excellent diagnosis, this will exclude all static files
+  // from the authentication check. This is a generic solution that checks
+  // for a file extension in the path.
+  if (/\..*$/.test(pathname)) {
+    return NextResponse.next();
+  }
+
   const cookieName = 'auth_session';
   const sessionId = request.cookies.get(cookieName)?.value;
   

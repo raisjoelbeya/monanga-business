@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import NewsletterForm from "@/components/NewsletterForm";
 import { Logo } from "@/components/Logo";
 
@@ -57,10 +58,7 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
           <div className="flex items-center mb-4">
-            <div className="mr-3">
-              <Logo size="sm" withText={false} />
-            </div>
-            <span className="text-white text-xl font-bold">Monanga Business</span>
+	          <Logo size="sm" withText={true} />
           </div>
           <p className="text-gray-400 text-sm mb-4 max-w-xs">
             Votre partenaire e-commerce de confiance à Kinshasa, offrant une large gamme de produits de qualité.
@@ -139,10 +137,10 @@ export default function Home() {
         {/* Content */}
         <div className="relative max-w-4xl text-center z-10 p-4">
           <div className="flex flex-col items-center justify-center mb-6">
-            <div className="flex items-center justify-center mb-6">
-              <Logo size="xxl" withText={true} />
+            <div className="mb-8">
+              <Logo size="xl" withText={true} />
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6">
+            <h1 className="text-3xl sm:text-5xl md:text-5xl lg:text-6xl font-extrabold mb-6">
               Votre Partenaire <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 E-commerce à Kinshasa

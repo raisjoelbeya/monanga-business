@@ -72,7 +72,7 @@ export default function Dashboard() {
 	return (<div className="min-h-screen bg-black text-white">
 		{/* En-tête */}
 		<header className="bg-gray-900 shadow-lg">
-			<div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+			<div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
 				<h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
 				<div className="flex items-center space-x-4">
 					<UserGreeting className="text-xl text-white font-bold capitalize"/>

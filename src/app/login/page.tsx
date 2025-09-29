@@ -31,24 +31,18 @@ function LoginContent() {
       <div className="w-full max-w-md">
         {/* Logo et titre */}
         
-        <div className="text-center mb-10">
-            <div className="flex items-center justify-center mb-4">
-                <div className="w-10 h-10 items-center justify-center mr-4">
-                    <Logo size="md" withText={false} />
-                </div>
-                <h2 className="text-3xl font-extrabold text-white">
-                    Connexion
-                </h2>
-            </div>
-          <p className="text-gray-400 mt-2">
-            Connectez-vous pour accéder à votre espace personnel
-          </p>
-        </div>
-        
         {/* Carte du formulaire */}
         <div className="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">
-            Connectez-vous à votre compte
+	        <div className="flex flex-col items-center justify-center mb-6">
+		        <div className="mb-5">
+			        <Logo size="lg" withText={false} />
+		        </div>
+		        <h2 className="text-3xl font-extrabold text-white">
+			        Connexion
+		        </h2>
+	        </div>
+          <h2 className="text-gray-400 mt-2 mb-6 text-center">
+	          Connectez-vous pour accéder à votre espace personnel
           </h2>
 
           {error && (

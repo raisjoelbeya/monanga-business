@@ -42,12 +42,12 @@ export async function POST() {
     
     // Créer la chaîne d'attributs du cookie
     const cookieAttributes = Object.entries(sessionCookie.attributes)
-      .filter(([_, value]) => value !== undefined && value !== null)
+      .filter(([, value]) => value !== undefined && value !== null)
       .map(([key, value]) => value === true ? key : `${key}=${value}`)
       .join('; ');
     
     // Créer la réponse avec le cookie de session vide
-    const response = new NextResponse(
+    return new NextResponse(
       JSON.stringify({ success: true }),
       { 
         status: 200,
@@ -56,8 +56,6 @@ export async function POST() {
         }
       }
     );
-    
-    return response;
   } catch (error) {
     console.error('Logout error:', error);
     return new NextResponse(

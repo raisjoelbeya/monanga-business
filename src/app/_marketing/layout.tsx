@@ -63,10 +63,7 @@ export default function MarketingLayout({
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div>
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white font-bold">MB</span>
-                  </div>
-                  <span className="text-white text-xl font-bold">Monanga Business</span>
+	                <Logo size="sm" withText={true} />
                 </div>
                 <p className="text-sm">
                   Votre partenaire e-commerce de confiance à Kinshasa, offrant une large gamme de produits de qualité.
