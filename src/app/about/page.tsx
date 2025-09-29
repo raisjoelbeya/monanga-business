@@ -1,11 +1,9 @@
-import { Metadata } from "next";
+'use client'
 
-export const metadata: Metadata = {
-  title: "À propos - Monanga Business",
-  description: "Découvrez l'histoire et la mission de Monanga Business, votre partenaire e-commerce de confiance à Kinshasa.",
-};
+import {useRouter} from "next/navigation";
 
 export default function AboutPage() {
+	const router = useRouter();
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <div className="text-center mb-12">
@@ -77,6 +75,20 @@ export default function AboutPage() {
             </li>
           </ul>
         </section>
+	      {/* Bouton de retour à l'accueil */}
+	      <div className="mt-8 text-center">
+		      <button
+			      onClick={() => router.push('/')}
+			      className="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white transition-colors"
+		      >
+			      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+			           xmlns="http://www.w3.org/2000/svg">
+				      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+				            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+			      </svg>
+			      Retour à l&apos;accueil
+		      </button>
+	      </div>
       </div>
     </div>
   );

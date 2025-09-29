@@ -1,9 +1,6 @@
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Paiements - Monanga Business',
-  description: 'Méthodes de paiement sécurisées acceptées sur Monanga Business',
-};
+import { useRouter } from 'next/navigation';
 
 const paymentMethods = [
   {
@@ -155,6 +152,7 @@ const faqs = [
 ];
 
 export default function PaymentsPage() {
+  const router = useRouter();
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       <div className="text-center mb-12">
@@ -264,7 +262,22 @@ export default function PaymentsPage() {
 
       <div className="text-sm text-gray-400 mt-12 border-t border-gray-700 pt-6 text-center">
         <p>Dernière mise à jour : 17 septembre 2025</p>
-        <p>© 2025 Monanga Business. Tous droits réservés.</p>
+        <p> 2025 Monanga Business. Tous droits réservés.</p>
+      </div>
+      
+      {/* Bouton de retour à l'accueil */}
+      <div className="mt-12 text-center">
+        <button
+          onClick={() => router.push('/')}
+          className="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white transition-colors"
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Retour à l&apos;accueil
+        </button>
       </div>
     </div>
   );

@@ -1,10 +1,7 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Centre d\'aide - Monanga Business',
-  description: 'Trouvez de l\'aide et des réponses à vos questions sur nos services, commandes et livraisons.',
-};
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const helpSections = [
   {
@@ -100,6 +97,7 @@ const helpSections = [
 ];
 
 export default function HelpPage() {
+  const router = useRouter();
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="text-center mb-12">
@@ -178,6 +176,21 @@ export default function HelpPage() {
             Voir la FAQ complète
           </Link>
         </div>
+      </div>
+      
+      {/* Bouton de retour à l'accueil */}
+      <div className="mt-12 text-center">
+        <button
+          onClick={() => router.push('/')}
+          className="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white transition-colors"
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Retour à l&apos;accueil
+        </button>
       </div>
     </div>
   );

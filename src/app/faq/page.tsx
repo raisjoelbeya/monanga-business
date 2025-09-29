@@ -1,9 +1,6 @@
-import { Metadata } from 'next';
+'use client'
 
-export const metadata: Metadata = {
-  title: 'FAQ - Monanga Business',
-  description: 'Trouvez des réponses aux questions fréquemment posées sur nos services, livraisons et paiements.',
-};
+import {useRouter} from "next/navigation";
 
 const faqs = [
   {
@@ -41,7 +38,9 @@ const faqs = [
 ];
 
 export default function FAQPage() {
-  return (
+	const router = useRouter();
+	
+	return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Foire aux questions</h1>
@@ -81,6 +80,20 @@ export default function FAQPage() {
         >
           Nous contacter
         </a>
+	      {/* Bouton de retour à l'accueil */}
+	      <div className="mt-8 text-center">
+		      <button
+			      onClick={() => router.push('/')}
+			      className="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white transition-colors"
+		      >
+			      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+			           xmlns="http://www.w3.org/2000/svg">
+				      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+				            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+			      </svg>
+			      Retour à l&apos;accueil
+		      </button>
+	      </div>
       </div>
     </div>
   );
